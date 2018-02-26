@@ -1,0 +1,37 @@
+plugins {
+    id 'com.github.ben-manes.versions' version '0.17.0'
+    id 'java-library'
+    id 'java-gradle-plugin'
+}
+
+group = 'com.github.am4dr'
+version = '0.1.0-SNAPSHOT'
+
+ext {
+    jdkVersion = '1.9'
+    junit_version = '5.1.0'
+    libraries = [
+            'junit_api': [
+                    'org.junit.jupiter:junit-jupiter-api:'+junit_version,
+            ],
+            'junit_runtime': [
+                    'org.junit.jupiter:junit-jupiter-engine:'+junit_version,
+            ]
+    ]
+}
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    implementation gradleApi()
+
+    testImplementation gradleTestKit()
+    testImplementation libraries.junit_api
+    testRuntime libraries.junit_runtime
+}
+
+test {
+    useJUnitPlatform()
+}
