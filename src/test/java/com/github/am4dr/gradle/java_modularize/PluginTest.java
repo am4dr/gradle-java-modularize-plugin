@@ -1,4 +1,5 @@
 package com.github.am4dr.gradle.java_modularize;
+import com.github.am4dr.gradle.java_modularize.util.GradleBuildSupport;
 import org.gradle.testkit.runner.GradleRunner;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;

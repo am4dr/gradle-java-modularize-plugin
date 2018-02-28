@@ -1,4 +1,4 @@
-package com.github.am4dr.gradle.java_modularize;
+package com.github.am4dr.gradle.java_modularize.util;
 
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.GradleRunner;

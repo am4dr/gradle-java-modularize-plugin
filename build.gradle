@@ -18,10 +18,13 @@ ext {
                     'org.junit.jupiter:junit-jupiter-engine:'+junit_version,
             ]
     ]
+    targetJarNames = ['unnamed', 'autonamed', 'named']
 }
 
-repositories {
-    jcenter()
+allprojects {
+    repositories {
+        jcenter()
+    }
 }
 
 dependencies {
@@ -32,6 +35,37 @@ dependencies {
     testRuntime libraries.junit_runtime
 }
 
+project(':targetJars') {
+    apply plugin: 'java-library'
+
+    def jarTaskNamer = { name -> "${name}Jar" }
+    targetJarNames.each { String name ->
+        sourceSets.create(name) {}
+        configurations.create(name)
+        def jarTaskName = jarTaskNamer(name)
+        def jarTask = tasks.create(jarTaskName, Jar) { Jar jar ->
+            jar.baseName = name
+            jar.from sourceSets.getByName(name).output
+        }
+        artifacts.add(name, jarTask)
+    }
+    tasks.getByName(jarTaskNamer("autonamed")) { Jar task ->
+        task.manifest { m ->
+            m.attributes.put('Automatic-Module-Name', 'sample.autonamed')
+        }
+    }
+}
+
+sourceSets {
+    test {
+        resources {
+            srcDirs = ['src/test/resources', 'targetJars/build/libs']
+        }
+    }
+}
+processTestResources {
+    dependsOn(targetJarNames.collect { name -> ":targetJars:${name}Jar" })
+}
 test {
     useJUnitPlatform()
 }
