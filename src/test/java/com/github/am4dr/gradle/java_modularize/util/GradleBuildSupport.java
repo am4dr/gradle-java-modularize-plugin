@@ -11,6 +11,7 @@ import java.nio.file.Files;
 import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.function.Consumer;
 
 import static java.nio.file.StandardOpenOption.APPEND;
 
@@ -70,5 +71,10 @@ public class GradleBuildSupport {
 
     public Executable execute() {
         return runner::build;
+    }
+
+    public GradleBuildSupport runner(Consumer<GradleRunner> consumer) {
+        consumer.accept(runner);
+        return this;
     }
 }

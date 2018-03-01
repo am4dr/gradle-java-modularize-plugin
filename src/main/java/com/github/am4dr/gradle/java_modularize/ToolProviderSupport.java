@@ -10,20 +10,17 @@ import java.util.spi.ToolProvider;
 public class ToolProviderSupport {
 
     public static ToolProvider getToolProvider(String name) {
-        final Optional<ToolProvider> jdeps = ToolProvider.findFirst(name);
-        if (!jdeps.isPresent()) {
+        final Optional<ToolProvider> tool = ToolProvider.findFirst(name);
+        if (!tool.isPresent()) {
             throw new IllegalStateException(String.format("%s is not found by %s", name, ToolProvider.class.getName()));
         }
-        return jdeps.get();
+        return tool.get();
     }
 
     public static Result run(ToolProvider tool, String... args) {
-        try (final StringWriter swo = new StringWriter();
-             final PrintWriter pwo = new PrintWriter(swo);
-             final StringWriter swe = new StringWriter();
-             final PrintWriter pwe = new PrintWriter(swo)) {
-
-            return new Result(tool.run(pwo, pwe, args), swo.toString(), swe.toString());
+        try (final StringWriter swOut = new StringWriter(); final PrintWriter pwOut = new PrintWriter(swOut);
+             final StringWriter swErr = new StringWriter(); final PrintWriter pwErr = new PrintWriter(swErr)) {
+            return new Result(tool.run(pwOut, pwErr, args), swOut.toString(), swErr.toString());
         } catch (IOException e) {
             throw new UncheckedIOException(e);
         }

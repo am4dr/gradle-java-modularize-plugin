@@ -16,7 +16,7 @@ public class GenerateModuleInfoTask extends DefaultTask {
 
     private File targetJar;
     private Property<Boolean> isOpenModule = getProject().getObjects().property(Boolean.class);
-    private FileCollection dependencies;
+    private FileCollection dependencies = getProject().files();
     private DirectoryProperty outputDir = newOutputDirectory();
 
     public GenerateModuleInfoTask() {

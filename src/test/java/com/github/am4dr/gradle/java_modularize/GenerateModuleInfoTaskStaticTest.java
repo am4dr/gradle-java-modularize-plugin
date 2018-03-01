@@ -66,8 +66,6 @@ class GenerateModuleInfoTaskStaticTest {
     @Test
     void jdepsToolProviderTest() {
         final ToolProviderSupport.Result jdeps = ToolProviderSupport.run("jdeps", "--version");
-        System.out.print(jdeps.out);
-        System.err.print(jdeps.err);
         assertEquals(0, jdeps.exitCode);
     }
 
