@@ -1,22 +1,20 @@
 package com.github.am4dr.gradle.java_modularize;
 
 import org.gradle.api.DefaultTask;
+import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.DirectoryProperty;
-import org.gradle.api.file.FileCollection;
+import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.Property;
-import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.OutputDirectory;
-import org.gradle.api.tasks.TaskAction;
-import org.gradle.api.tasks.TaskExecutionException;
+import org.gradle.api.tasks.*;
 
 import java.io.File;
 import java.util.Set;
 
 public class GenerateModuleInfoTask extends DefaultTask {
 
-    private File targetJar;
+    private RegularFileProperty targetJar = newInputFile();
     private Property<Boolean> isOpenModule = getProject().getObjects().property(Boolean.class);
-    private FileCollection dependencies = getProject().files();
+    private ConfigurableFileCollection dependencies = getProject().files();
     private DirectoryProperty outputDir = newOutputDirectory();
 
     public GenerateModuleInfoTask() {
@@ -25,7 +23,7 @@ public class GenerateModuleInfoTask extends DefaultTask {
 
     @TaskAction
     public void run() {
-        final ToolProviderSupport.Result result = generateModuleInfoJava(isOpenModule.getOrElse(false), targetJar, outputDir.get().getAsFile(), dependencies.getFiles());
+        final ToolProviderSupport.Result result = generateModuleInfoJava(isOpenModule.getOrElse(false), targetJar.get().getAsFile(), outputDir.get().getAsFile(), dependencies.getFiles());
         if (result.exitCode != 0) {
             throw new TaskExecutionException(this, new IllegalStateException("exit code is not 0"));
         }
@@ -37,13 +35,9 @@ public class GenerateModuleInfoTask extends DefaultTask {
         return ToolProviderSupport.run("jdeps", moduleTypeOption, outputDir.getAbsolutePath(), targetJar.getAbsolutePath());
     }
 
-    @Input
-    public File getTargetJar() {
+    @InputFile
+    public RegularFileProperty getTargetJar() {
         return targetJar;
-    }
-
-    public void setTargetJar(File targetJar) {
-        this.targetJar = targetJar;
     }
 
     @Input
@@ -51,25 +45,13 @@ public class GenerateModuleInfoTask extends DefaultTask {
         return isOpenModule;
     }
 
-    public void setIsOpenModule(Property<Boolean> isOpenModule) {
-        this.isOpenModule = isOpenModule;
-    }
-
-    @Input
-    public FileCollection getDependencies() {
+    @InputFiles
+    public ConfigurableFileCollection getDependencies() {
         return dependencies;
-    }
-
-    public void setDependencies(FileCollection dependencies) {
-        this.dependencies = dependencies;
     }
 
     @OutputDirectory
     public DirectoryProperty getOutputDir() {
         return outputDir;
-    }
-
-    public void setOutputDir(DirectoryProperty outputDir) {
-        this.outputDir = outputDir;
     }
 }
