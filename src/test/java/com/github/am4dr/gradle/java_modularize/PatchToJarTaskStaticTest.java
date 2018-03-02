@@ -13,7 +13,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class CompileModuleInfoJavaTaskStaticTest {
+class PatchToJarTaskStaticTest {
 
     static final Path tmpTestDir = Paths.get("build", "tmp", "test");
     Path tempDir;
@@ -57,34 +57,14 @@ class CompileModuleInfoJavaTaskStaticTest {
     }
 
     @Test
-    void extractModuleNameTest() throws IOException {
-        final Path infoFile = tempDir.resolve("module-info.java");
-        Files.createFile(infoFile);
-        Files.write(infoFile, "module sample.module { }".getBytes());
-        final String name = CompileModuleInfoJavaTask.extractModuleName(infoFile.toFile());
-        assertEquals("sample.module", name);
-    }
-
-    @Test
-    void extractModuleNameTest2() throws IOException {
-        final Path infoFile = tempDir.resolve("module-info.java");
-        Files.createFile(infoFile);
-        Files.write(infoFile, String.join("\n","",
-                "module sample.unnamed {",
-                "   exports sample;",
-                "}").getBytes());
-        final String name = CompileModuleInfoJavaTask.extractModuleName(infoFile.toFile());
-        assertEquals("sample.unnamed", name);
-    }
-
-    @Test
-    void compileTest() throws IOException {
+    void patchingTest() throws IOException {
         final Path outDir = tempDir.resolve("out");
-        final Path infoFile = tempDir.resolve("module-info.java");
+        final Path infoFile = tempDir.resolve("module-info.class");
         Files.createFile(infoFile);
-        Files.write(infoFile, "module sample.unnamed { exports sample; }".getBytes());
-        final ToolProviderSupport.Result result = CompileModuleInfoJavaTask.compile("sample.unnamed", infoFile.toFile(), SampleTargetJars.UNNAMED.file, outDir.toFile());
+        final ToolProviderSupport.Result result = PatchToJarTask.patch(SampleTargetJars.UNNAMED.file, infoFile.toFile(), tempDir.toFile(), outDir.toFile());
+
         assertEquals(0, result.exitCode);
-        assertTrue(Files.isRegularFile(outDir.resolve("module-info.class")));
+        final Path patched = outDir.resolve("unnamed.jar");
+        assertTrue(Files.isRegularFile(patched));
     }
 }
