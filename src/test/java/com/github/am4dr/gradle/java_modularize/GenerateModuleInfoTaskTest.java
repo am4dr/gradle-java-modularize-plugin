@@ -64,7 +64,7 @@ class GenerateModuleInfoTaskTest {
                 "}"
         ).runner(r -> r.withArguments("generate")).build();
 
-        final Path outputFile = build.tempBuildDir.resolve("output/unnamed/module-info.java");
+        final Path outputFile = build.tempBuildDir.resolve("output/test.target.sample/module-info.java");
         assertTrue(Files.isRegularFile(outputFile));
     }
 }

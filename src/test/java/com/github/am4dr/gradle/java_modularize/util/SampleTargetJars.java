@@ -12,7 +12,7 @@ public enum SampleTargetJars {
     public File file;
 
     SampleTargetJars(String name) {
-        final URL resource = SampleTargetJars.class.getClassLoader().getResource(name + ".jar");
+        final URL resource = SampleTargetJars.class.getClassLoader().getResource(String.format("test-target-sample-%s-%s.jar", "1.0", name));
         try {
             this.file = new File(Objects.requireNonNull(resource).toURI());
         } catch (URISyntaxException e) {

@@ -15,7 +15,7 @@ public class TargetJarTest {
 
     @Test
     void test() {
-        final URL resource = this.getClass().getClassLoader().getResource("unnamed.jar");
+        final URL resource = this.getClass().getClassLoader().getResource(SampleTargetJars.UNNAMED.file.getName());
         assertNotNull(resource);
     }
 

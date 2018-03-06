@@ -64,7 +64,7 @@ class PatchToJarTaskStaticTest {
         final ToolProviderSupport.Result result = PatchToJarTask.patch(SampleTargetJars.UNNAMED.file, infoFile.toFile(), tempDir.toFile(), outDir.toFile());
 
         assertEquals(0, result.exitCode);
-        final Path patched = outDir.resolve("unnamed.jar");
+        final Path patched = outDir.resolve(SampleTargetJars.UNNAMED.file.getName());
         assertTrue(Files.isRegularFile(patched));
     }
 }

@@ -73,7 +73,7 @@ class GenerateModuleInfoTaskStaticTest {
     void jdepsGenerateFromUnnamed() {
         final ToolProviderSupport.Result result = executeGenerateMethod(false, SampleTargetJars.UNNAMED.file);
         assertEquals(0, result.exitCode);
-        final Path moduleInfoJava = tempDir.resolve("unnamed/module-info.java");
+        final Path moduleInfoJava = tempDir.resolve("test.target.sample/module-info.java");
         assertTrue(Files.exists(moduleInfoJava));
     }
 

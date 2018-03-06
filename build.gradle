@@ -4,7 +4,7 @@ plugins {
     id 'java-gradle-plugin'
 }
 
-group = 'com.github.am4dr'
+group = 'com.github.am4dr.gradle-java-modularize-plugin'
 version = '0.1.0-SNAPSHOT'
 
 ext {
@@ -23,6 +23,7 @@ ext {
 
 allprojects {
     repositories {
+        mavenLocal()
         jcenter()
     }
 }
@@ -37,6 +38,11 @@ dependencies {
 
 project(':targetJars') {
     apply plugin: 'java-library'
+    apply plugin: 'maven'
+
+    group = "com.github.am4dr.gradle-java-modularize-plugin"
+    version = "1.0"
+    archivesBaseName = "test-target-sample"
 
     def jarTaskNamer = { name -> "${name}Jar" }
     targetJarNames.each { String name ->
@@ -44,10 +50,11 @@ project(':targetJars') {
         configurations.create(name)
         def jarTaskName = jarTaskNamer(name)
         def jarTask = tasks.create(jarTaskName, Jar) { Jar jar ->
-            jar.baseName = name
+            jar.classifier = name
             jar.from sourceSets.getByName(name).output
         }
         artifacts.add(name, jarTask)
+        artifacts.add("archives", jarTask)
     }
     tasks.getByName(jarTaskNamer("autonamed")) { Jar task ->
         task.manifest { m ->
