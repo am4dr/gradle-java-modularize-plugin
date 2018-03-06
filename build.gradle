@@ -74,5 +74,6 @@ processTestResources {
     dependsOn(targetJarNames.collect { name -> ":targetJars:${name}Jar" })
 }
 test {
+    dependsOn ":targetJars:install"
     useJUnitPlatform()
 }

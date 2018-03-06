@@ -1,4 +1,5 @@
 package com.github.am4dr.gradle.java_modularize;
+
 import com.github.am4dr.gradle.java_modularize.util.GradleBuildSupport;
 import org.gradle.testkit.runner.GradleRunner;
 import org.junit.jupiter.api.BeforeAll;
@@ -38,5 +39,45 @@ public class PluginTest {
     @Test
     void pluginApplyByIdTest() {
         runner.build();
+    }
+
+    @Test
+    void emptyExtensionBlockTest() throws IOException {
+        build.append("",
+                "modularize {",
+                "}"
+        ).build();
+    }
+    @Test
+    void emptyModulesBlockTest() throws IOException {
+        build.append("",
+                "modularize {",
+                "   modules {",
+                "       sampleModule {}",
+                "   }",
+                "}"
+        ).build();
+    }
+
+    @Test
+    void modulesBlockTest() throws IOException {
+        build.append("",
+                "modularize {",
+                "   modules {",
+                "       sampleModule {",
+                "           descriptor = 'group:artifact:1.0'",
+                "       }",
+                "   }",
+                "}"
+        ).build();
+    }
+
+    @Test
+    void extensionModuleMethodTest() throws IOException {
+        build.append("",
+                "modularize {",
+                "   module 'sampleModule', 'group:artifact:1.0'",
+                "}"
+        ).build();
     }
 }
