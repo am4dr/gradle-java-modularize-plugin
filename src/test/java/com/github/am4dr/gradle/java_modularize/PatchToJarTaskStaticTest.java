@@ -1,7 +1,6 @@
 package com.github.am4dr.gradle.java_modularize;
 
 import com.github.am4dr.gradle.java_modularize.util.SampleTargetJars;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,7 +28,7 @@ class PatchToJarTaskStaticTest {
         tempDir.toFile().deleteOnExit();
     }
 
-    @AfterEach
+    //@AfterEach
     void cleanTempDir() throws IOException {
         Files.walkFileTree(tempDir, new FileVisitor<>() {
             @Override
@@ -61,9 +60,10 @@ class PatchToJarTaskStaticTest {
         final Path outDir = tempDir.resolve("out");
         final Path infoFile = tempDir.resolve("module-info.class");
         Files.createFile(infoFile);
+        Files.write(infoFile, this.getClass().getResourceAsStream("module-info.class").readAllBytes());
         final ToolProviderSupport.Result result = PatchToJarTask.patch(SampleTargetJars.UNNAMED.file, infoFile.toFile(), tempDir.toFile(), outDir.toFile());
 
-        assertEquals(0, result.exitCode);
+        assertEquals(0, result.exitCode, result.out + result.err);
         final Path patched = outDir.resolve(SampleTargetJars.UNNAMED.file.getName());
         assertTrue(Files.isRegularFile(patched));
     }

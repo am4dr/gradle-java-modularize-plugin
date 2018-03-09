@@ -3,11 +3,16 @@ package com.github.am4dr.gradle.java_modularize;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.DirectoryProperty;
+import org.gradle.api.file.RegularFile;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.provider.Property;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.*;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Set;
 
 public class GenerateModuleInfoTask extends DefaultTask {
@@ -22,11 +27,15 @@ public class GenerateModuleInfoTask extends DefaultTask {
     }
 
     @TaskAction
-    public void run() {
-        final ToolProviderSupport.Result result = generateModuleInfoJava(isOpenModule.getOrElse(false), targetJar.get().getAsFile(), outputDir.get().getAsFile(), dependencies.getFiles());
+    public void run() throws IOException {
+        final File tempDir = getTemporaryDir();
+        final ToolProviderSupport.Result result = generateModuleInfoJava(isOpenModule.getOrElse(false), targetJar.get().getAsFile(), tempDir, dependencies.getFiles());
         if (result.exitCode != 0) {
-            throw new TaskExecutionException(this, new IllegalStateException("exit code is not 0"));
+            throw new TaskExecutionException(this, new IllegalStateException("exit code is not 0: " + result.err));
         }
+        final Path infoFile = Files.find(tempDir.toPath(), Integer.MAX_VALUE, (path, attr) -> path.getFileName().toString().equals("module-info.java"))
+                .findAny().orElseThrow(() -> new TaskExecutionException(this, new IllegalStateException("module-info.java has not generated")));
+        Files.copy(infoFile, getModuleInfoJavaFile().get().getAsFile().toPath());
     }
 
     // TODO handle dependency module paths
@@ -53,5 +62,10 @@ public class GenerateModuleInfoTask extends DefaultTask {
     @OutputDirectory
     public DirectoryProperty getOutputDir() {
         return outputDir;
+    }
+
+    @OutputFile
+    public Provider<RegularFile> getModuleInfoJavaFile() {
+        return outputDir.file("module-info.java");
     }
 }

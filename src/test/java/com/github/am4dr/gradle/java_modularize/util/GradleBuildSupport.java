@@ -23,18 +23,24 @@ public class GradleBuildSupport {
     public final GradleRunner runner;
 
     public GradleBuildSupport() throws IOException {
-        this(DEFAULT_TEMP_BUILD_ROOT_DIR, GradleBuildSupport.class);
+        this(DEFAULT_TEMP_BUILD_ROOT_DIR, GradleBuildSupport.class, true);
     }
 
     public GradleBuildSupport(Class<?> klass) throws IOException {
-        this(DEFAULT_TEMP_BUILD_ROOT_DIR, klass);
+        this(DEFAULT_TEMP_BUILD_ROOT_DIR, klass, true);
     }
 
-    public GradleBuildSupport(Path tempBuildRootDir, Class<?> klass) throws IOException {
-        tempBuildDir = Files.createTempDirectory(tempBuildRootDir, klass.getName());
-        tempBuildDir.toFile().deleteOnExit();
+    public GradleBuildSupport(Class<?> klass, boolean deleteOnExit) throws IOException {
+        this(DEFAULT_TEMP_BUILD_ROOT_DIR, klass, deleteOnExit);
+    }
+
+    public GradleBuildSupport(Path tempBuildRootDir, Class<?> klass, boolean deleteOnExit) throws IOException {
+        tempBuildDir = Files.createTempDirectory(tempBuildRootDir, klass.getSimpleName());
         tempBuildFile = Files.createFile(tempBuildDir.resolve("build.gradle"));
-        tempBuildFile.toFile().deleteOnExit();
+        if (deleteOnExit) {
+            tempBuildDir.toFile().deleteOnExit();
+            tempBuildFile.toFile().deleteOnExit();
+        }
         runner = GradleRunner.create().withProjectDir(tempBuildDir.toFile()).withPluginClasspath();
     }
 

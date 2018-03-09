@@ -25,7 +25,7 @@ class GenerateModuleInfoTaskTest {
 
     @BeforeEach
     void setupBuildDir() throws IOException {
-        build = new GradleBuildSupport();
+        build = new GradleBuildSupport(this.getClass(), false);
         build.append(
                 "plugins {",
                 "   id '" + GradleJavaModularizePlugin.PLUGIN_ID + "'",
@@ -54,17 +54,18 @@ class GenerateModuleInfoTaskTest {
 
     @Test
     void taskRunWithInputsTest() throws IOException {
-        final String targetJar = SampleTargetJars.UNNAMED.file.toString().replaceAll("\\\\", "/");
-        final String outputDir = build.tempBuildDir.resolve("output").toString().replaceAll("\\\\", "/");
+        final String targetJarString = SampleTargetJars.UNNAMED.file.toString().replace("\\", "/");
+        final Path outputDir = build.tempBuildDir.resolve("output");
+        final String outputDirString = outputDir.toString().replace("\\", "/");
         build.append(
                 "import " + GenerateModuleInfoTask.class.getName(),
                 "task generate(type: " + GenerateModuleInfoTask.class.getSimpleName() + ") {",
-                "   targetJar = project.file('" + targetJar + "')",
-                "   outputDir = project.file('" + outputDir + "')",
+                "   targetJar = project.file('" + targetJarString + "')",
+                "   outputDir = project.file('" + outputDirString + "')",
                 "}"
         ).runner(r -> r.withArguments("generate")).build();
 
-        final Path outputFile = build.tempBuildDir.resolve("output/test.target.sample/module-info.java");
+        final Path outputFile = outputDir.resolve("module-info.java");
         assertTrue(Files.isRegularFile(outputFile));
     }
 }

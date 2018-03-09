@@ -25,7 +25,7 @@ public class PluginTest {
 
     @BeforeEach
     void setupBuildDir() throws IOException {
-        build = new GradleBuildSupport(this.getClass());
+        build = new GradleBuildSupport(this.getClass(), false);
         build.append(
                 "plugins {",
                 "   id '" + GradleJavaModularizePlugin.PLUGIN_ID + "'",
@@ -99,5 +99,24 @@ public class PluginTest {
         final String[] lines = result.getOutput().split("\n");
         assertTrue(Arrays.stream(lines).anyMatch(it -> it.contains("sampleModule1")));
         assertTrue(Arrays.stream(lines).anyMatch(it -> it.contains("sampleModule2")));
+    }
+
+    @Test
+    void tasksIntegrationTest() throws IOException {
+        final BuildResult result = build.append("import java.util.jar.JarFile",
+                "modularize {",
+                "   module 'sampleModule', '" + SampleTargetJars.UNNAMED.id + "'",
+                "}",
+                "task show {",
+                "   dependsOn tasks.modularize",
+                "   doLast {",
+                "       def file = project.configurations.getByName('sampleModule').artifacts.files.files[0]",
+                "       println file",
+                "       JarFile jarfile = new JarFile(file)",
+                "       jarfile.stream().forEach(System.out.&println)",
+                "   }",
+                "}"
+        ).runner(r -> r.withArguments("show")).build();
+        assertTrue(Arrays.stream(result.getOutput().split("\n")).anyMatch(it -> it.startsWith("module-info.class")));
     }
 }

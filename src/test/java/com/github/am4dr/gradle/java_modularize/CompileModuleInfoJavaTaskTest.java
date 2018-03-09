@@ -26,7 +26,7 @@ class CompileModuleInfoJavaTaskTest {
 
     @BeforeEach
     void setupBuildDir() throws IOException {
-        build = new GradleBuildSupport();
+        build = new GradleBuildSupport(this.getClass(), false);
         build.append(
                 "plugins {",
                 "   id '" + GradleJavaModularizePlugin.PLUGIN_ID + "'",

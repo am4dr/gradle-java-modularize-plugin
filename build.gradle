@@ -62,7 +62,7 @@ project(':targetJars') {
         }
     }
 }
-
+//project.configurations.getByName("").artifacts.files.files
 sourceSets {
     test {
         resources {

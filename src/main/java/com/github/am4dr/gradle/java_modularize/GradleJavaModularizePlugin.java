@@ -2,6 +2,7 @@ package com.github.am4dr.gradle.java_modularize;
 
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
+import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ResolvedDependency;
 import org.gradle.api.file.Directory;
@@ -11,7 +12,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Stream;
 
 public class GradleJavaModularizePlugin implements Plugin<Project> {
 
@@ -26,10 +26,12 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
             project.getConfigurations().maybeCreate(resolveConfigNamer.apply(module.name)).setVisible(false);
             project.getConfigurations().maybeCreate(module.name);
         });
+        project.getTasks().maybeCreate("modularize");
         project.afterEvaluate(GradleJavaModularizePlugin::afterEval);
     }
 
     private static void afterEval(Project project) {
+        final Task modularizeTask = project.getTasks().maybeCreate("modularize");
         final JavaModularizeExtension modularize = project.getExtensions().getByType(JavaModularizeExtension.class);
         modularize.modules.withType(JavaModularizeExtension.ModuleSpec.class, module -> {
             if (module.descriptor == null || module.descriptor.equals("")) {
@@ -64,12 +66,14 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
                             final Provider<Directory> patchedJarOutputDir = project.getLayout().getBuildDirectory().dir(PatchToJarTask.class.getSimpleName() + "/" + moduleId);
                             patchJar.getOutputDir().set(patchedJarOutputDir);
                             patchJar.getTargetJar().set(ar.getFile());
-                            patchJar.getInfoFile().set(compileModuleInfo.getOutputDir().file("module-info.class"));
+                            patchJar.getInfoFile().set(compileModuleInfo.getModuleInfoClassFile());
+                            patchJar.getInputs().files(compileModuleInfo.getOutputs());
+                            compileModuleInfo.getInputs().files(generateModuleInfo.getOutputs());
                             project.getArtifacts().add(module.name, patchJar.getPatchedJar());
+                            modularizeTask.dependsOn(patchJar);
                         });
             });
         });
-        project.getTasks().forEach(System.out::println);
     }
 
     private static String capitalize(String str) {

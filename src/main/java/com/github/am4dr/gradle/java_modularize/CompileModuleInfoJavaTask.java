@@ -2,15 +2,15 @@ package com.github.am4dr.gradle.java_modularize;
 
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.DirectoryProperty;
+import org.gradle.api.file.RegularFile;
 import org.gradle.api.file.RegularFileProperty;
-import org.gradle.api.tasks.InputFile;
-import org.gradle.api.tasks.OutputDirectory;
-import org.gradle.api.tasks.TaskAction;
-import org.gradle.api.tasks.TaskExecutionException;
+import org.gradle.api.provider.Provider;
+import org.gradle.api.tasks.*;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -23,11 +23,15 @@ public class CompileModuleInfoJavaTask extends DefaultTask {
 
     @TaskAction
     public void compile() throws IOException {
+        final File tempDir = getTemporaryDir();
         final File infoAsFile = infoFile.get().getAsFile();
-        final ToolProviderSupport.Result result = compile(extractModuleName(infoAsFile), infoAsFile, targetJar.get().getAsFile(), outputDir.get().getAsFile());
+        final ToolProviderSupport.Result result = compile(extractModuleName(infoAsFile), infoAsFile, targetJar.get().getAsFile(), tempDir);
         if (result.exitCode != 0) {
             throw new TaskExecutionException(this, new IllegalStateException("exit code is not 0: " + result.err));
         }
+        final Path infoFile = Files.find(tempDir.toPath(), Integer.MAX_VALUE, (path, attr) -> path.getFileName().toString().equals("module-info.class"))
+                .findAny().orElseThrow(() -> new TaskExecutionException(this, new IllegalStateException("module-info.class has not generated")));
+        Files.copy(infoFile, getModuleInfoClassFile().get().getAsFile().toPath());
     }
 
     public static ToolProviderSupport.Result compile(String moduleName, File infoFile, File targetJar, File outputDir) {
@@ -62,5 +66,10 @@ public class CompileModuleInfoJavaTask extends DefaultTask {
     @OutputDirectory
     public DirectoryProperty getOutputDir() {
         return outputDir;
+    }
+
+    @OutputFile
+    public Provider<RegularFile> getModuleInfoClassFile() {
+        return outputDir.file("module-info.class");
     }
 }
