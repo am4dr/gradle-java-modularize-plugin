@@ -4,6 +4,7 @@ import org.gradle.api.Action;
 import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.Project;
 
+// TODO add dependency transitivity flag
 public class JavaModularizeExtension {
 
     final NamedDomainObjectContainer<ModuleSpec> modules;

@@ -2,11 +2,10 @@ package com.github.am4dr.gradle.java_modularize;
 
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.DirectoryProperty;
+import org.gradle.api.file.RegularFile;
 import org.gradle.api.file.RegularFileProperty;
-import org.gradle.api.tasks.InputFile;
-import org.gradle.api.tasks.InputFiles;
-import org.gradle.api.tasks.OutputDirectory;
-import org.gradle.api.tasks.TaskAction;
+import org.gradle.api.provider.Provider;
+import org.gradle.api.tasks.*;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,9 +15,9 @@ import java.nio.file.StandardCopyOption;
 
 public class PatchToJarTask extends DefaultTask {
 
-    private RegularFileProperty targetJar;
-    private RegularFileProperty infoFile;
-    private DirectoryProperty outputDir;
+    private RegularFileProperty targetJar = newInputFile();
+    private RegularFileProperty infoFile = newInputFile();
+    private DirectoryProperty outputDir = newOutputDirectory();
 
     @TaskAction
     void run() throws IOException {
@@ -51,5 +50,10 @@ public class PatchToJarTask extends DefaultTask {
     @OutputDirectory
     public DirectoryProperty getOutputDir() {
         return outputDir;
+    }
+
+    @OutputFile
+    public Provider<RegularFile> getPatchedJar() {
+        return outputDir.file(targetJar.map(file -> file.getAsFile().getName()));
     }
 }

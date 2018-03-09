@@ -23,11 +23,15 @@ public class GradleBuildSupport {
     public final GradleRunner runner;
 
     public GradleBuildSupport() throws IOException {
-        this(DEFAULT_TEMP_BUILD_ROOT_DIR);
+        this(DEFAULT_TEMP_BUILD_ROOT_DIR, GradleBuildSupport.class);
     }
 
-    public GradleBuildSupport(Path tempBuildRootDir) throws IOException {
-        tempBuildDir = Files.createTempDirectory(tempBuildRootDir, this.getClass().getName());
+    public GradleBuildSupport(Class<?> klass) throws IOException {
+        this(DEFAULT_TEMP_BUILD_ROOT_DIR, klass);
+    }
+
+    public GradleBuildSupport(Path tempBuildRootDir, Class<?> klass) throws IOException {
+        tempBuildDir = Files.createTempDirectory(tempBuildRootDir, klass.getName());
         tempBuildDir.toFile().deleteOnExit();
         tempBuildFile = Files.createFile(tempBuildDir.resolve("build.gradle"));
         tempBuildFile.toFile().deleteOnExit();
