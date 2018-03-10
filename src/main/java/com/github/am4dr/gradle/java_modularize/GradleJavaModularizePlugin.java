@@ -47,7 +47,6 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
                     .forEach(desc -> project.getDependencies().add(resolverConfigName, desc));
             final Set<ResolvedDependency> deps = resolverConfig.getResolvedConfiguration().getFirstLevelModuleDependencies();
             // TODO process children of the dependencies recursively
-            // TODO check the jar does not contain module-info.class
             deps.forEach(dep -> {
                 dep.getModuleArtifacts().stream()
                         .filter(ar -> ar.getType().equals("jar"))
