@@ -122,7 +122,7 @@ public class PluginTest {
 
     @Test
     void specifyMultipleDescriptorsToModuleTest() throws IOException {
-        final BuildResult result = build.append("import java.util.jar.JarFile",
+        final BuildResult result = build.append("",
                 "modularize {",
                 "   module 'sampleModule', '" + SampleTargetJars.UNNAMED.id + "'",
                 "   module 'sampleModule', '" + SampleTargetJars.AUTONAMED.id + "'",
@@ -139,5 +139,26 @@ public class PluginTest {
         ).runner(r -> r.withArguments("show")).build();
         assertTrue(Arrays.stream(result.getOutput().split("\n")).anyMatch(it -> it.contains("test-target-sample:jar:jar:autonamed")));
         assertTrue(Arrays.stream(result.getOutput().split("\n")).anyMatch(it -> it.contains("test-target-sample:jar:jar:unnamed")));
+    }
+
+    @Test
+    void targetContainsModuleInfoClassTest() throws IOException {
+        final BuildResult result = build.append("import java.util.jar.JarFile",
+                "modularize {",
+                "   module 'sampleModule', '" + SampleTargetJars.NAMED.id + "'",
+                "}",
+                "task show {",
+                "   dependsOn tasks.modularize",
+                "   doLast {",
+                "       def arts = project.configurations.getByName('sampleModule').artifacts",
+                "       arts.each { art ->",
+                "           println art",
+                "           JarFile jarfile = new JarFile(art.file)",
+                "           assert jarfile.stream().anyMatch { it.name == 'module-info.class' }",
+                "       }",
+                "   }",
+                "}"
+        ).runner(r -> r.withArguments("show")).build();
+        assertTrue(Arrays.stream(result.getOutput().split("\n")).anyMatch(it -> it.contains("test-target-sample:jar:jar:named")));
     }
 }

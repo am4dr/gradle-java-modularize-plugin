@@ -9,10 +9,14 @@ import org.gradle.api.artifacts.ResolvedDependency;
 import org.gradle.api.file.Directory;
 import org.gradle.api.provider.Provider;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
+import java.util.jar.JarFile;
 
 public class GradleJavaModularizePlugin implements Plugin<Project> {
 
@@ -48,6 +52,22 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
                 dep.getModuleArtifacts().stream()
                         .filter(ar -> ar.getType().equals("jar"))
                         .forEach(ar -> {
+                            final boolean containsModuleInfo;
+                            try {
+                                containsModuleInfo = containsModuleInfo(ar.getFile());
+                            } catch (IOException e) {
+                                throw new UncheckedIOException(e);
+                            }
+                            if (containsModuleInfo) {
+                                project.getArtifacts().add(module.name, ar.getFile(), artifact -> {
+                                    artifact.setName(ar.getName());
+                                    artifact.setType("jar");
+                                    artifact.setExtension("jar");
+                                    artifact.setClassifier(ar.getClassifier());
+                                });
+                                return;
+                            }
+
                             String moduleId = createModuleId(dep, ar);
                             final GenerateModuleInfoTask generateModuleInfo = getGenerateModuleInfoTask(project, ar, moduleId);
                             final CompileModuleInfoJavaTask compileModuleInfo = getCompileModuleInfoJavaTask(project, ar, moduleId);
@@ -56,6 +76,8 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
                             compileModuleInfo.getInputs().files(generateModuleInfo.getOutputs());
                             patchJar.getInfoFile().set(compileModuleInfo.getModuleInfoClassFile());
                             patchJar.getInputs().files(compileModuleInfo.getOutputs());
+                            modularizeTask.dependsOn(patchJar);
+                            modularizeUmbrellaTask.dependsOn(modularizeTask);
 
                             project.getArtifacts().add(module.name, patchJar.getPatchedJar(), artifact -> {
                                 artifact.setName(ar.getName());
@@ -63,11 +85,13 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
                                 artifact.setExtension("jar");
                                 artifact.setClassifier(ar.getClassifier());
                             });
-                            modularizeTask.dependsOn(patchJar);
-                            modularizeUmbrellaTask.dependsOn(modularizeTask);
                         });
             });
         });
+    }
+
+    private static boolean containsModuleInfo(File targetJar) throws IOException {
+        return new JarFile(targetJar).getJarEntry("module-info.class") != null;
     }
 
     private static String createModuleId(ResolvedDependency dep, ResolvedArtifact ar) {
