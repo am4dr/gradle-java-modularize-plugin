@@ -69,7 +69,7 @@ public class PluginTest {
                 "modularize {",
                 "   modules {",
                 "       sampleModule {",
-                "           descriptor = '" + SampleTargetJars.UNNAMED.id + "'",
+                "           descriptors = ['" + SampleTargetJars.UNNAMED.id + "']",
                 "       }",
                 "   }",
                 "}"
@@ -118,5 +118,26 @@ public class PluginTest {
                 "}"
         ).runner(r -> r.withArguments("show")).build();
         assertTrue(Arrays.stream(result.getOutput().split("\n")).anyMatch(it -> it.startsWith("module-info.class")));
+    }
+
+    @Test
+    void specifyMultipleDescriptorsToModuleTest() throws IOException {
+        final BuildResult result = build.append("import java.util.jar.JarFile",
+                "modularize {",
+                "   module 'sampleModule', '" + SampleTargetJars.UNNAMED.id + "'",
+                "   module 'sampleModule', '" + SampleTargetJars.AUTONAMED.id + "'",
+                "}",
+                "task show {",
+                "   dependsOn tasks.modularize",
+                "   doLast {",
+                "       def files = project.configurations.getByName('sampleModule').artifacts",
+                "       files.each { file ->",
+                "           println file",
+                "       }",
+                "   }",
+                "}"
+        ).runner(r -> r.withArguments("show")).build();
+        assertTrue(Arrays.stream(result.getOutput().split("\n")).anyMatch(it -> it.contains("test-target-sample:jar:jar:autonamed")));
+        assertTrue(Arrays.stream(result.getOutput().split("\n")).anyMatch(it -> it.contains("test-target-sample:jar:jar:unnamed")));
     }
 }

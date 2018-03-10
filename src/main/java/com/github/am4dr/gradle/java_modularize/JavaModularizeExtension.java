@@ -4,6 +4,9 @@ import org.gradle.api.Action;
 import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.Project;
 
+import java.util.HashSet;
+import java.util.Set;
+
 // TODO add dependency transitivity flag
 public class JavaModularizeExtension {
 
@@ -18,16 +21,17 @@ public class JavaModularizeExtension {
     }
 
     public void module(String name, String descriptor) {
-        modules.maybeCreate(name).descriptor = descriptor;
+        modules.maybeCreate(name).descriptors.add(descriptor);
     }
 
     public static class ModuleSpec {
 
         String name;
-        String descriptor;
+        Set<String> descriptors;
 
         public ModuleSpec(String name) {
             this.name = name;
+            this.descriptors = new HashSet<>();
         }
     }
 }
