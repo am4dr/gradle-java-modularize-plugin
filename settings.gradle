@@ -1,3 +1,4 @@
 rootProject.name = 'gradle-java-modularize-plugin'
 
 include 'targetJars'
+include 'dependingJar'

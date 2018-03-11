@@ -44,10 +44,12 @@ project(':targetJars') {
     version = "1.0"
     archivesBaseName = "test-target-sample"
 
-    def jarTaskNamer = { name -> "${name}Jar" }
-    targetJarNames.each { String name ->
+    targetJarNames.each { name ->
         sourceSets.create(name) {}
         configurations.create(name)
+    }
+    def jarTaskNamer = { name -> "${name}Jar" }
+    targetJarNames.each { String name ->
         def jarTaskName = jarTaskNamer(name)
         def jarTask = tasks.create(jarTaskName, Jar) { Jar jar ->
             jar.classifier = name
@@ -62,7 +64,22 @@ project(':targetJars') {
         }
     }
 }
-//project.configurations.getByName("").artifacts.files.files
+project(':dependingJar') {
+    apply plugin: 'java-library'
+    apply plugin: 'maven'
+
+    group = "com.github.am4dr.gradle-java-modularize-plugin"
+    version = "1.0"
+    archivesBaseName = "test-target-depending-sample"
+
+    dependencies {
+        api "$group:test-target-sample:$version:unnamed"
+    }
+    compileJava {
+        dependsOn ":targetJars:install"
+    }
+}
+
 sourceSets {
     test {
         resources {
@@ -74,6 +91,6 @@ processTestResources {
     dependsOn(targetJarNames.collect { name -> ":targetJars:${name}Jar" })
 }
 test {
-    dependsOn ":targetJars:install"
+    dependsOn ":targetJars:install", ":dependingJar:install"
     useJUnitPlatform()
 }
