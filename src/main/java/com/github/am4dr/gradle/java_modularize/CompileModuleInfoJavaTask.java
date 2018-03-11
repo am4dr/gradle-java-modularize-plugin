@@ -50,7 +50,7 @@ public class CompileModuleInfoJavaTask extends DefaultTask {
         if (dependencies.isEmpty()) {
             return List.of();
         }
-        return List.of("--module-path", String.join(":", dependencies.stream().map(File::toString).collect(Collectors.toList())));
+        return List.of("--module-path", String.join(File.pathSeparator, dependencies.stream().map(File::toString).collect(Collectors.toList())));
     }
 
     public static String extractModuleName(File file) throws IOException {

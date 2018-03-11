@@ -99,6 +99,15 @@ class GenerateModuleInfoTaskStaticTest {
         assertTrue(Files.exists(moduleInfoJava), String.join("\n\n", result.out, result.err));
     }
 
+    @Test
+    void multipleDependencyTargetTest() {
+        final ToolProviderSupport.Result result = executeGenerateMethod(false, DependentJar.DEPENDENT.file, Set.of(SampleTargetJars.UNNAMED.file, SampleTargetJars.NAMED.file));
+        assertEquals(0, result.exitCode, String.join("\n\n", result.out, result.err));
+
+        final Path moduleInfoJava = tempDir.resolve("test.dependent.target.sample/module-info.java");
+        assertTrue(Files.exists(moduleInfoJava), String.join("\n\n", result.out, result.err));
+    }
+
     ToolProviderSupport.Result executeGenerateMethod(boolean isOpenModule, File targetJar) {
         return executeGenerateMethod(isOpenModule, targetJar, Set.of());
     }

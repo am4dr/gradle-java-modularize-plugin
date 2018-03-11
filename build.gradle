@@ -7,7 +7,7 @@ plugins {
 }
 
 group = 'com.github.am4dr.gradle'
-version = '0.1.0'
+version = '0.1.1'
 
 ext {
     jdkVersion = JavaVersion.VERSION_1_9
@@ -21,6 +21,7 @@ ext {
             ]
     ]
     targetJarNames = ['unnamed', 'autonamed', 'named']
+    targetSampleVersion = '1.1'
 }
 
 allprojects {
@@ -46,7 +47,7 @@ project(':targetJars') {
     apply plugin: 'maven'
 
     group = "com.github.am4dr.gradle.java-modularize-plugin"
-    version = "1.0"
+    version = targetSampleVersion
     archivesBaseName = "test-target-sample"
 
     targetJarNames.each { name ->
@@ -74,11 +75,11 @@ project(':dependentJar') {
     apply plugin: 'maven'
 
     group = "com.github.am4dr.gradle.java-modularize-plugin"
-    version = "1.0"
+    version = targetSampleVersion
     archivesBaseName = "test-dependent-target-sample"
 
     dependencies {
-        api "$group:test-target-sample:$version:unnamed"
+        api "$group:test-target-sample:$targetSampleVersion:unnamed"
     }
     compileJava {
         dependsOn ":targetJars:install"

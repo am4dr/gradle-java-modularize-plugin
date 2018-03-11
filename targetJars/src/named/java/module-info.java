@@ -1,3 +1,3 @@
 module sample.named {
-    exports sample;
+    exports sample.named;
 }

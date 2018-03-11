@@ -11,10 +11,11 @@ public enum DependentJar {
 
     public String id;
     public File file;
+    private static final String version = "1.1";
 
     DependentJar(String name) {
-        this.id = "com.github.am4dr.gradle.java-modularize-plugin:test-dependent-target-sample:1.0";
-        final URL resource = DependentJar.class.getClassLoader().getResource(String.format("test-dependent-target-sample-%s.jar", "1.0"));
+        this.id = "com.github.am4dr.gradle.java-modularize-plugin:test-dependent-target-sample:"+version;
+        final URL resource = DependentJar.class.getClassLoader().getResource(String.format("test-dependent-target-sample-%s.jar", version));
         try {
             this.file = new File(Objects.requireNonNull(resource).toURI());
         } catch (URISyntaxException e) {
