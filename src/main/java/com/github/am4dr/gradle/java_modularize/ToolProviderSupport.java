@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.io.UncheckedIOException;
+import java.util.List;
 import java.util.Optional;
 import java.util.spi.ToolProvider;
 
@@ -28,6 +29,9 @@ public class ToolProviderSupport {
 
     public static Result run(String name, String... args) {
         return run(getToolProvider(name), args);
+    }
+    public static Result run(String name, List<String> args) {
+        return run(getToolProvider(name), args.toArray(new String[]{}));
     }
 
     public static class Result {

@@ -1,7 +1,7 @@
 package com.github.am4dr.gradle.java_modularize;
 
+import com.github.am4dr.gradle.java_modularize.util.DependentJar;
 import com.github.am4dr.gradle.java_modularize.util.SampleTargetJars;
-import org.gradle.api.tasks.TaskInstantiationException;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,7 +13,8 @@ import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Set;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class GenerateModuleInfoTaskStaticTest {
 
@@ -59,11 +60,6 @@ class GenerateModuleInfoTaskStaticTest {
     }
 
     @Test
-    void directTaskInstantiationIsNotAllowed() {
-        assertThrows(TaskInstantiationException.class, GenerateModuleInfoTask::new);
-    }
-
-    @Test
     void jdepsToolProviderTest() {
         final ToolProviderSupport.Result jdeps = ToolProviderSupport.run("jdeps", "--version");
         assertEquals(0, jdeps.exitCode);
@@ -91,7 +87,23 @@ class GenerateModuleInfoTaskStaticTest {
         assertEquals(1, result.exitCode);
     }
 
+    @Test
+    void jdepsGenerateFromDependentJar() {
+        final ToolProviderSupport.Result failure = executeGenerateMethod(false, DependentJar.DEPENDENT.file);
+        assertEquals(1, failure.exitCode, String.join("\n\n", failure.out, failure.err));
+
+        final ToolProviderSupport.Result result = executeGenerateMethod(false, DependentJar.DEPENDENT.file, Set.of(SampleTargetJars.UNNAMED.file));
+        assertEquals(0, result.exitCode, String.join("\n\n", result.out, result.err));
+
+        final Path moduleInfoJava = tempDir.resolve("test.target.dependent.sample/module-info.java");
+        assertTrue(Files.exists(moduleInfoJava));
+    }
+
     ToolProviderSupport.Result executeGenerateMethod(boolean isOpenModule, File targetJar) {
-        return GenerateModuleInfoTask.generateModuleInfoJava(isOpenModule, targetJar, tempDir.toFile(), Set.of());
+        return executeGenerateMethod(isOpenModule, targetJar, Set.of());
+    }
+
+    ToolProviderSupport.Result executeGenerateMethod(boolean isOpenModule, File targetJar, Set<File> dependencies) {
+        return GenerateModuleInfoTask.generateModuleInfoJava(isOpenModule, targetJar, tempDir.toFile(), dependencies);
     }
 }

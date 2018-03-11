@@ -1,5 +1,6 @@
 package com.github.am4dr.gradle.java_modularize;
 
+import com.github.am4dr.gradle.java_modularize.util.DependentJar;
 import com.github.am4dr.gradle.java_modularize.util.SampleTargetJars;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -85,6 +86,17 @@ class CompileModuleInfoJavaTaskStaticTest {
         Files.write(infoFile, "module sample.unnamed { exports sample; }".getBytes());
         final ToolProviderSupport.Result result = CompileModuleInfoJavaTask.compile("sample.unnamed", infoFile.toFile(), SampleTargetJars.UNNAMED.file, outDir.toFile());
         assertEquals(0, result.exitCode);
+        assertTrue(Files.isRegularFile(outDir.resolve("module-info.class")));
+    }
+
+    @Test
+    void compileDependentModuleInfoTest() throws IOException {
+        final Path outDir = tempDir.resolve("out");
+        final Path infoFile = tempDir.resolve("module-info.java");
+        Files.createFile(infoFile);
+        Files.write(infoFile, "module sample.dependent { exports sample.dependent; }".getBytes());
+        final ToolProviderSupport.Result result = CompileModuleInfoJavaTask.compile("sample.dependent", infoFile.toFile(), DependentJar.DEPENDENT.file, outDir.toFile());
+        assertEquals(0, result.exitCode, String.join("\n\n", result.out, result.err));
         assertTrue(Files.isRegularFile(outDir.resolve("module-info.class")));
     }
 }

@@ -64,16 +64,16 @@ project(':targetJars') {
         }
     }
 }
-project(':dependingJar') {
+project(':dependentJar') {
     apply plugin: 'java-library'
     apply plugin: 'maven'
 
     group = "com.github.am4dr.gradle-java-modularize-plugin"
     version = "1.0"
-    archivesBaseName = "test-target-depending-sample"
+    archivesBaseName = "test-target-dependent-sample"
 
     dependencies {
-        api "$group:test-target-sample:$version:unnamed"
+        api "$group:test-target-sample:$version:named"
     }
     compileJava {
         dependsOn ":targetJars:install"
@@ -83,14 +83,15 @@ project(':dependingJar') {
 sourceSets {
     test {
         resources {
-            srcDirs = ['src/test/resources', 'targetJars/build/libs']
+            srcDirs = ['src/test/resources', 'targetJars/build/libs', 'dependentJar/build/libs']
         }
     }
 }
 processTestResources {
     dependsOn(targetJarNames.collect { name -> ":targetJars:${name}Jar" })
+    dependsOn ':dependentJar:jar'
 }
 test {
-    dependsOn ":targetJars:install", ":dependingJar:install"
+    dependsOn ":targetJars:install", ":dependentJar:install"
     useJUnitPlatform()
 }
