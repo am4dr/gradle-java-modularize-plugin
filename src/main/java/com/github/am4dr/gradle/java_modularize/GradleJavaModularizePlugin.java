@@ -73,7 +73,7 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
                                     .map(ResolvedArtifact::getFile)
                                     .collect(Collectors.toSet());
                             final ConfigurableFileCollection files = project.files(dependencies);
-                            String moduleId = createModuleId(dep, ar);
+                            List<String> moduleId = createModuleId(dep, ar);
                             final GenerateModuleInfoTask generateModuleInfo = getGenerateModuleInfoTask(project, ar, moduleId);
                             generateModuleInfo.getDependencies().setFrom(files);
                             final CompileModuleInfoJavaTask compileModuleInfo = getCompileModuleInfoJavaTask(project, ar, moduleId);
@@ -101,16 +101,16 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
         return new JarFile(targetJar).getJarEntry("module-info.class") != null;
     }
 
-    private static String createModuleId(ResolvedDependency dep, ResolvedArtifact ar) {
+    private static List<String> createModuleId(ResolvedDependency dep, ResolvedArtifact ar) {
         final ArrayList<String> nameParts = new ArrayList<>(List.of(dep.getModuleGroup(), dep.getModuleName(), dep.getModuleVersion()));
         final String classifier = ar.getClassifier();
         if (classifier != null && !classifier.equals("")) {
             nameParts.add(classifier);
         }
-        return String.join("_", nameParts);
+        return nameParts;
     }
 
-    private static PatchToJarTask getPatchToJarTask(Project project, ResolvedArtifact ar, String moduleId) {
+    private static PatchToJarTask getPatchToJarTask(Project project, ResolvedArtifact ar, List<String> moduleId) {
         final PatchToJarTask patchJar = project.getTasks().maybeCreate(taskName("patchJar", moduleId), PatchToJarTask.class);
         final Provider<Directory> patchedJarOutputDir = project.getLayout().getBuildDirectory().dir(PatchToJarTask.class.getSimpleName() + "/" + moduleId);
         patchJar.getOutputDir().set(patchedJarOutputDir);
@@ -118,7 +118,7 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
         return patchJar;
     }
 
-    private static CompileModuleInfoJavaTask getCompileModuleInfoJavaTask(Project project, ResolvedArtifact ar, String moduleId) {
+    private static CompileModuleInfoJavaTask getCompileModuleInfoJavaTask(Project project, ResolvedArtifact ar, List<String> moduleId) {
         final CompileModuleInfoJavaTask compileModuleInfo = project.getTasks().maybeCreate(taskName("compileModuleInfo", moduleId), CompileModuleInfoJavaTask.class);
         final Provider<Directory> moduleInfoClassDir = project.getLayout().getBuildDirectory().dir(CompileModuleInfoJavaTask.class.getSimpleName() + "/" + moduleId);
         compileModuleInfo.getOutputDir().set(moduleInfoClassDir);
@@ -126,7 +126,7 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
         return compileModuleInfo;
     }
 
-    private static GenerateModuleInfoTask getGenerateModuleInfoTask(Project project, ResolvedArtifact ar, String moduleId) {
+    private static GenerateModuleInfoTask getGenerateModuleInfoTask(Project project, ResolvedArtifact ar, List<String> moduleId) {
         final GenerateModuleInfoTask generateModuleInfo = project.getTasks().maybeCreate(taskName("generateModuleInfo", moduleId), GenerateModuleInfoTask.class);
         final Provider<Directory> moduleInfoJavaDir = project.getLayout().getBuildDirectory().dir(GenerateModuleInfoTask.class.getSimpleName() + "/" + moduleId);
         generateModuleInfo.getOutputDir().set(moduleInfoJavaDir);
@@ -138,7 +138,7 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
         return str.substring(0, 1).toUpperCase() + str.substring(1);
     }
 
-    private static String taskName(String verb, String str) {
-        return verb + capitalize(str);
+    private static String taskName(String verb, List<String> str) {
+        return verb + str.stream().map(GradleJavaModularizePlugin::capitalize).reduce((l ,r) -> l + "_" + r);
     }
 }
