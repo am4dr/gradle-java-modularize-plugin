@@ -115,6 +115,6 @@ public class TasksIntegrationTest {
                 "   }",
                 "}"
         ).runner(r -> r.withArguments("show")).build();
-        assertTrue(Arrays.stream(result.getOutput().split("\n")).anyMatch(it -> it.contains("test-target-dependent-sample:jar:jar:null")), result.getOutput());
+        assertTrue(Arrays.stream(result.getOutput().split("\n")).anyMatch(it -> it.contains("test-dependent-target-sample:jar:jar:null")), result.getOutput());
     }
 }

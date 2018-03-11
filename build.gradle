@@ -2,10 +2,12 @@ plugins {
     id 'com.github.ben-manes.versions' version '0.17.0'
     id 'java-library'
     id 'java-gradle-plugin'
+//    id 'org.gradle.plugin-publish'
+    id 'maven'
 }
 
-group = 'com.github.am4dr.gradle-java-modularize-plugin'
-version = '0.1.0-SNAPSHOT'
+group = 'com.github.am4dr.gradle'
+version = '0.1.0'
 
 ext {
     jdkVersion = '1.9'
@@ -40,7 +42,7 @@ project(':targetJars') {
     apply plugin: 'java-library'
     apply plugin: 'maven'
 
-    group = "com.github.am4dr.gradle-java-modularize-plugin"
+    group = "com.github.am4dr.gradle.java-modularize-plugin"
     version = "1.0"
     archivesBaseName = "test-target-sample"
 
@@ -68,9 +70,9 @@ project(':dependentJar') {
     apply plugin: 'java-library'
     apply plugin: 'maven'
 
-    group = "com.github.am4dr.gradle-java-modularize-plugin"
+    group = "com.github.am4dr.gradle.java-modularize-plugin"
     version = "1.0"
-    archivesBaseName = "test-target-dependent-sample"
+    archivesBaseName = "test-dependent-target-sample"
 
     dependencies {
         api "$group:test-target-sample:$version:named"
@@ -95,3 +97,11 @@ test {
     dependsOn ":targetJars:install", ":dependentJar:install"
     useJUnitPlatform()
 }
+//pluginBundle {
+//    plugins {
+//        modularizePlugin {
+//            id = 'com.github.am4dr.java-modularize'
+//            displayNmae = 'Java Modularize Plugin'
+//        }
+//    }
+//}

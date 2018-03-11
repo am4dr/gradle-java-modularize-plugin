@@ -13,8 +13,8 @@ public enum DependentJar {
     public File file;
 
     DependentJar(String name) {
-        this.id = "com.github.am4dr.gradle-java-modularize-plugin:test-target-dependent-sample:1.0";
-        final URL resource = DependentJar.class.getClassLoader().getResource(String.format("test-target-dependent-sample-%s.jar", "1.0"));
+        this.id = "com.github.am4dr.gradle.java-modularize-plugin:test-dependent-target-sample:1.0";
+        final URL resource = DependentJar.class.getClassLoader().getResource(String.format("test-dependent-target-sample-%s.jar", "1.0"));
         try {
             this.file = new File(Objects.requireNonNull(resource).toURI());
         } catch (URISyntaxException e) {

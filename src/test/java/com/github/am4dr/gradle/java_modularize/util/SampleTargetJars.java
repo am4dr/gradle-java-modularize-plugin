@@ -13,7 +13,7 @@ public enum SampleTargetJars {
     public File file;
 
     SampleTargetJars(String name) {
-        this.id = "com.github.am4dr.gradle-java-modularize-plugin:test-target-sample:1.0:"+name;
+        this.id = "com.github.am4dr.gradle.java-modularize-plugin:test-target-sample:1.0:"+name;
         final URL resource = SampleTargetJars.class.getClassLoader().getResource(String.format("test-target-sample-%s-%s.jar", "1.0", name));
         try {
             this.file = new File(Objects.requireNonNull(resource).toURI());
