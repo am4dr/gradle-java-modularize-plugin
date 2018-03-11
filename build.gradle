@@ -2,7 +2,7 @@ plugins {
     id 'com.github.ben-manes.versions' version '0.17.0'
     id 'java-library'
     id 'java-gradle-plugin'
-//    id 'org.gradle.plugin-publish'
+    id "com.gradle.plugin-publish" version "0.9.10"
     id 'maven'
 }
 
@@ -101,11 +101,16 @@ test {
     dependsOn ":targetJars:install", ":dependentJar:install"
     useJUnitPlatform()
 }
-//pluginBundle {
-//    plugins {
-//        modularizePlugin {
-//            id = 'com.github.am4dr.java-modularize'
-//            displayNmae = 'Java Modularize Plugin'
-//        }
-//    }
-//}
+pluginBundle {
+    website = 'https://github.com/am4dr/gradle-java-modularize-plugin'
+    vcsUrl = 'https://github.com/am4dr/gradle-java-modularize-plugin'
+    description = 'module-info.class generation and injection'
+    tags = ['jigsaw', 'modules']
+
+    plugins {
+        modularizePlugin {
+            id = 'com.github.am4dr.java-modularize'
+            displayName = 'Gradle Java Modularize Plugin'
+        }
+    }
+}
