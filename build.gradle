@@ -10,7 +10,7 @@ group = 'com.github.am4dr.gradle'
 version = '0.1.0'
 
 ext {
-    jdkVersion = '1.9'
+    jdkVersion = JavaVersion.VERSION_1_9
     junit_version = '5.1.0'
     libraries = [
             'junit_api': [
@@ -24,6 +24,9 @@ ext {
 }
 
 allprojects {
+    sourceCompatibility = jdkVersion
+    targetCompatibility = jdkVersion
+
     repositories {
         mavenLocal()
         jcenter()
@@ -75,7 +78,7 @@ project(':dependentJar') {
     archivesBaseName = "test-dependent-target-sample"
 
     dependencies {
-        api "$group:test-target-sample:$version:named"
+        api "$group:test-target-sample:$version:unnamed"
     }
     compileJava {
         dependsOn ":targetJars:install"
