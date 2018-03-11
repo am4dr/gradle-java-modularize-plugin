@@ -139,6 +139,6 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
     }
 
     private static String taskName(String verb, List<String> str) {
-        return verb + str.stream().map(GradleJavaModularizePlugin::capitalize).reduce((l ,r) -> l + "_" + r);
+        return str.stream().map(GradleJavaModularizePlugin::capitalize).reduce(verb, (l ,r) -> l + "_" + r);
     }
 }
