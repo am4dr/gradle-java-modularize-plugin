@@ -10,6 +10,7 @@ import org.junit.jupiter.api.Test;
 import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
+import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -84,7 +85,7 @@ class CompileModuleInfoJavaTaskStaticTest {
         final Path infoFile = tempDir.resolve("module-info.java");
         Files.createFile(infoFile);
         Files.write(infoFile, "module sample.unnamed { exports sample; }".getBytes());
-        final ToolProviderSupport.Result result = CompileModuleInfoJavaTask.compile("sample.unnamed", infoFile.toFile(), SampleTargetJars.UNNAMED.file, outDir.toFile());
+        final ToolProviderSupport.Result result = CompileModuleInfoJavaTask.compile("sample.unnamed", infoFile.toFile(), SampleTargetJars.UNNAMED.file, outDir.toFile(), Set.of());
         assertEquals(0, result.exitCode);
         assertTrue(Files.isRegularFile(outDir.resolve("module-info.class")));
     }
@@ -95,7 +96,7 @@ class CompileModuleInfoJavaTaskStaticTest {
         final Path infoFile = tempDir.resolve("module-info.java");
         Files.createFile(infoFile);
         Files.write(infoFile, "module sample.dependent { exports sample.dependent; }".getBytes());
-        final ToolProviderSupport.Result result = CompileModuleInfoJavaTask.compile("sample.dependent", infoFile.toFile(), DependentJar.DEPENDENT.file, outDir.toFile());
+        final ToolProviderSupport.Result result = CompileModuleInfoJavaTask.compile("sample.dependent", infoFile.toFile(), DependentJar.DEPENDENT.file, outDir.toFile(), Set.of(SampleTargetJars.UNNAMED.file));
         assertEquals(0, result.exitCode, String.join("\n\n", result.out, result.err));
         assertTrue(Files.isRegularFile(outDir.resolve("module-info.class")));
     }

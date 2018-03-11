@@ -6,6 +6,7 @@ import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ResolvedArtifact;
 import org.gradle.api.artifacts.ResolvedDependency;
+import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.Directory;
 import org.gradle.api.provider.Provider;
 
@@ -17,6 +18,7 @@ import java.util.List;
 import java.util.Set;
 import java.util.function.Function;
 import java.util.jar.JarFile;
+import java.util.stream.Collectors;
 
 public class GradleJavaModularizePlugin implements Plugin<Project> {
 
@@ -46,7 +48,6 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
                     .filter(it -> it != null && !it.equals(""))
                     .forEach(desc -> project.getDependencies().add(resolverConfigName, desc));
             final Set<ResolvedDependency> deps = resolverConfig.getResolvedConfiguration().getFirstLevelModuleDependencies();
-            // TODO process children of the dependencies recursively
             deps.forEach(dep -> {
                 dep.getModuleArtifacts().stream()
                         .filter(ar -> ar.getType().equals("jar"))
@@ -67,9 +68,16 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
                                 return;
                             }
 
+                            final Set<File> dependencies = dep.getChildren().stream().flatMap(it -> it.getAllModuleArtifacts().stream())
+                                    .filter(it -> it.getType().equals("jar"))
+                                    .map(ResolvedArtifact::getFile)
+                                    .collect(Collectors.toSet());
+                            final ConfigurableFileCollection files = project.files(dependencies);
                             String moduleId = createModuleId(dep, ar);
                             final GenerateModuleInfoTask generateModuleInfo = getGenerateModuleInfoTask(project, ar, moduleId);
+                            generateModuleInfo.getDependencies().setFrom(files);
                             final CompileModuleInfoJavaTask compileModuleInfo = getCompileModuleInfoJavaTask(project, ar, moduleId);
+                            compileModuleInfo.getDependencies().setFrom(files);
                             final PatchToJarTask patchJar = getPatchToJarTask(project, ar, moduleId);
                             compileModuleInfo.getInfoFile().set(generateModuleInfo.getOutputDir().file("module-info.java"));
                             compileModuleInfo.getInputs().files(generateModuleInfo.getOutputs());
