@@ -1,8 +1,10 @@
 package com.github.am4dr.gradle.java_modularize;
 
+import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
+import org.gradle.api.artifacts.ConfigurablePublishArtifact;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ResolvedArtifact;
 import org.gradle.api.artifacts.ResolvedDependency;
@@ -39,9 +41,10 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
 
     private static void afterEval(Project project) {
         final Task modularizeUmbrellaTask = project.getTasks().maybeCreate("modularize");
-        final JavaModularizeExtension modularize = project.getExtensions().getByType(JavaModularizeExtension.class);
-        modularize.modules.withType(JavaModularizeExtension.ModuleSpec.class, module -> {
+        final JavaModularizeExtension modularizeExtension = project.getExtensions().getByType(JavaModularizeExtension.class);
+        modularizeExtension.modules.withType(JavaModularizeExtension.ModuleSpec.class, module -> {
             final Task modularizeTask = project.getTasks().maybeCreate("modularize" + capitalize(module.name));
+            modularizeUmbrellaTask.dependsOn(modularizeTask);
             final String resolverConfigName = resolverConfigNamer.apply(module.name);
             final Configuration resolverConfig = project.getConfigurations().getByName(resolverConfigName);
             module.descriptors.stream()
@@ -49,30 +52,17 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
                     .forEach(desc -> project.getDependencies().add(resolverConfigName, desc));
             final Set<ResolvedDependency> deps = resolverConfig.getResolvedConfiguration().getFirstLevelModuleDependencies();
             deps.forEach(dep -> {
-                dep.getModuleArtifacts().stream()
+                final Set<ResolvedArtifact> targetArtifacts = module.recursive ? dep.getAllModuleArtifacts() : dep.getModuleArtifacts();
+                targetArtifacts.stream()
                         .filter(ar -> ar.getType().equals("jar"))
                         .forEach(ar -> {
-                            final boolean containsModuleInfo;
-                            try {
-                                containsModuleInfo = containsModuleInfo(ar.getFile());
-                            } catch (IOException e) {
-                                throw new UncheckedIOException(e);
-                            }
+                            final boolean containsModuleInfo = containsModuleInfo(ar.getFile());
                             if (containsModuleInfo) {
-                                project.getArtifacts().add(module.name, ar.getFile(), artifact -> {
-                                    artifact.setName(ar.getName());
-                                    artifact.setType("jar");
-                                    artifact.setExtension("jar");
-                                    artifact.setClassifier(ar.getClassifier());
-                                });
+                                project.getArtifacts().add(module.name, ar.getFile(), copyArtifactCoordinatesFrom(ar));
                                 return;
                             }
 
-                            final Set<File> dependencies = dep.getChildren().stream().flatMap(it -> it.getAllModuleArtifacts().stream())
-                                    .filter(it -> it.getType().equals("jar"))
-                                    .map(ResolvedArtifact::getFile)
-                                    .collect(Collectors.toSet());
-                            final ConfigurableFileCollection files = project.files(dependencies);
+                            final ConfigurableFileCollection files = project.files(getAllDependencyJarFiles(dep));
                             List<String> moduleId = createModuleId(dep, ar);
                             final GenerateModuleInfoTask generateModuleInfo = getGenerateModuleInfoTask(project, ar, moduleId);
                             generateModuleInfo.getDependencies().setFrom(files);
@@ -84,21 +74,36 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
                             patchJar.getInfoFile().set(compileModuleInfo.getModuleInfoClassFile());
                             patchJar.getInputs().files(compileModuleInfo.getOutputs());
                             modularizeTask.dependsOn(patchJar);
-                            modularizeUmbrellaTask.dependsOn(modularizeTask);
 
-                            project.getArtifacts().add(module.name, patchJar.getPatchedJar(), artifact -> {
-                                artifact.setName(ar.getName());
-                                artifact.setType("jar");
-                                artifact.setExtension("jar");
-                                artifact.setClassifier(ar.getClassifier());
-                            });
+                            project.getArtifacts().add(module.name, patchJar.getPatchedJar(), copyArtifactCoordinatesFrom(ar));
                         });
             });
         });
     }
 
-    private static boolean containsModuleInfo(File targetJar) throws IOException {
-        return new JarFile(targetJar).getJarEntry("module-info.class") != null;
+    private static Action<ConfigurablePublishArtifact> copyArtifactCoordinatesFrom(ResolvedArtifact ar) {
+        return artifact -> {
+            artifact.setName(ar.getName());
+            artifact.setType("jar");
+            artifact.setExtension("jar");
+            artifact.setClassifier(ar.getClassifier());
+        };
+    }
+
+    private static Set<File> getAllDependencyJarFiles(ResolvedDependency dep) {
+        return dep.getChildren().stream()
+                .flatMap(it -> it.getAllModuleArtifacts().stream())
+                .filter(it -> it.getType().equals("jar"))
+                .map(ResolvedArtifact::getFile)
+                .collect(Collectors.toSet());
+    }
+
+    private static boolean containsModuleInfo(File targetJar) {
+        try {
+            return new JarFile(targetJar).getJarEntry("module-info.class") != null;
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
     }
 
     private static List<String> createModuleId(ResolvedDependency dep, ResolvedArtifact ar) {

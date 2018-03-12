@@ -101,4 +101,32 @@ public class JavaModularizeExtensionTest {
         assertTrue(Arrays.stream(lines).anyMatch(it -> it.contains("sampleModule2")));
     }
 
+    @Test
+    void recursiveFlagTest() throws IOException {
+        build.append("",
+                "modularize {",
+                "   module 'sampleModule1', '" + SampleTargetJars.UNNAMED.id + "', false",
+                "   module 'sampleModule2', '" + SampleTargetJars.UNNAMED.id + "', true",
+                "}",
+                "task show {",
+                "   doLast { project.configurations.forEach(System.out.&println) }",
+                "}"
+        ).runner(r -> r.withArguments("show", "-q")).build();
+    }
+
+    @Test
+    void moduleConfigByClosureTest() throws IOException {
+        build.append("",
+                "modularize {",
+                "   module('sampleModule1') {",
+                "       descriptors += '" + SampleTargetJars.UNNAMED.id + "'",
+                "       recursive = false",
+                "   }",
+                "}",
+                "task show {",
+                "   doLast { project.configurations.forEach(System.out.&println) }",
+                "}"
+        ).runner(r -> r.withArguments("show", "-q")).build();
+    }
+
 }
