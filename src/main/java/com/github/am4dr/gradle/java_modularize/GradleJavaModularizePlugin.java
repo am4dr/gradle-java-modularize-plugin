@@ -4,10 +4,7 @@ import org.gradle.api.Action;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
-import org.gradle.api.artifacts.ConfigurablePublishArtifact;
-import org.gradle.api.artifacts.Configuration;
-import org.gradle.api.artifacts.ResolvedArtifact;
-import org.gradle.api.artifacts.ResolvedDependency;
+import org.gradle.api.artifacts.*;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.Directory;
 import org.gradle.api.provider.Provider;
@@ -18,6 +15,7 @@ import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.jar.JarFile;
 import java.util.stream.Collectors;
@@ -50,34 +48,40 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
             module.descriptors.stream()
                     .filter(it -> it != null && !it.equals(""))
                     .forEach(desc -> project.getDependencies().add(resolverConfigName, desc));
-            final Set<ResolvedDependency> deps = resolverConfig.getResolvedConfiguration().getFirstLevelModuleDependencies();
-            deps.forEach(dep -> {
-                final Set<ResolvedArtifact> targetArtifacts = module.recursive ? dep.getAllModuleArtifacts() : dep.getModuleArtifacts();
-                targetArtifacts.stream()
-                        .filter(ar -> ar.getType().equals("jar"))
-                        .forEach(ar -> {
-                            final boolean containsModuleInfo = containsModuleInfo(ar.getFile());
-                            if (containsModuleInfo) {
-                                project.getArtifacts().add(module.name, ar.getFile(), copyArtifactCoordinatesFrom(ar));
-                                return;
-                            }
+            final ResolvedConfiguration resolvedConfiguration = resolverConfig.getResolvedConfiguration();
+            final List<ResolvedDependency> deps = new ArrayList<>(resolvedConfiguration.getFirstLevelModuleDependencies());
+            final Consumer<ResolvedDependency> modularizeArtifacts = dep -> dep.getModuleArtifacts().stream()
+                    .filter(ar -> ar.getType().equals("jar"))
+                    .forEach(ar -> {
+                        final boolean containsModuleInfo = containsModuleInfo(ar.getFile());
+                        if (containsModuleInfo) {
+                            project.getArtifacts().add(module.name, ar.getFile(), copyArtifactCoordinatesFrom(ar));
+                            return;
+                        }
 
-                            final ConfigurableFileCollection files = project.files(getAllDependencyJarFiles(dep));
-                            List<String> moduleId = createModuleId(dep, ar);
-                            final GenerateModuleInfoTask generateModuleInfo = getGenerateModuleInfoTask(project, ar, moduleId);
-                            generateModuleInfo.getDependencies().setFrom(files);
-                            final CompileModuleInfoJavaTask compileModuleInfo = getCompileModuleInfoJavaTask(project, ar, moduleId);
-                            compileModuleInfo.getDependencies().setFrom(files);
-                            final PatchToJarTask patchJar = getPatchToJarTask(project, ar, moduleId);
-                            compileModuleInfo.getInfoFile().set(generateModuleInfo.getOutputDir().file("module-info.java"));
-                            compileModuleInfo.getInputs().files(generateModuleInfo.getOutputs());
-                            patchJar.getInfoFile().set(compileModuleInfo.getModuleInfoClassFile());
-                            patchJar.getInputs().files(compileModuleInfo.getOutputs());
-                            modularizeTask.dependsOn(patchJar);
+                        final ConfigurableFileCollection files = project.files(getAllDependencyJarFiles(dep));
+                        List<String> moduleId = createModuleId(dep, ar);
+                        final GenerateModuleInfoTask generateModuleInfo = getGenerateModuleInfoTask(project, ar, moduleId);
+                        generateModuleInfo.getDependencies().setFrom(files);
+                        final CompileModuleInfoJavaTask compileModuleInfo = getCompileModuleInfoJavaTask(project, ar, moduleId);
+                        compileModuleInfo.getDependencies().setFrom(files);
+                        final PatchToJarTask patchJar = getPatchToJarTask(project, ar, moduleId);
+                        compileModuleInfo.getInfoFile().set(generateModuleInfo.getOutputDir().file("module-info.java"));
+                        compileModuleInfo.getInputs().files(generateModuleInfo.getOutputs());
+                        patchJar.getInfoFile().set(compileModuleInfo.getModuleInfoClassFile());
+                        patchJar.getInputs().files(compileModuleInfo.getOutputs());
+                        modularizeTask.dependsOn(patchJar);
 
-                            project.getArtifacts().add(module.name, patchJar.getPatchedJar(), copyArtifactCoordinatesFrom(ar));
-                        });
-            });
+                        project.getArtifacts().add(module.name, patchJar.getPatchedJar(), copyArtifactCoordinatesFrom(ar));
+                    });
+            deps.forEach(modularizeArtifacts);
+            if (module.recursive) {
+                Set<ResolvedDependency> children = deps.stream().flatMap(it -> it.getChildren().stream()).collect(Collectors.toSet());
+                while (!children.isEmpty()) {
+                    children.forEach(modularizeArtifacts);
+                    children = children.stream().flatMap(it -> it.getChildren().stream()).collect(Collectors.toSet());
+                }
+            }
         });
     }
 
