@@ -13,7 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
 
-public class PatchToJarTask extends DefaultTask {
+public class InjectModuleInfoTask extends DefaultTask {
 
     private RegularFileProperty targetJar = newInputFile();
     private RegularFileProperty infoFile = newInputFile();
@@ -22,26 +22,26 @@ public class PatchToJarTask extends DefaultTask {
     @TaskAction
     void run() throws IOException {
         final File tempDir = getTemporaryDir();
-        final ToolProviderSupport.Result result = patch(targetJar.get().getAsFile(), infoFile.getAsFile().get(), tempDir, outputDir.get().getAsFile());
+        final ToolProviderSupport.Result result = inject(targetJar.get().getAsFile(), infoFile.getAsFile().get(), tempDir, outputDir.get().getAsFile());
         if (result.exitCode != 0) {
             throw new TaskExecutionException(this, new IllegalStateException("exit code is not 0: " + result.err));
         }
     }
 
-    public static ToolProviderSupport.Result patch(File targetJar, File infoFile, File tempDir, File outputDir) throws IOException {
+    public static ToolProviderSupport.Result inject(File targetJar, File infoFile, File tempDir, File outputDir) throws IOException {
         Files.createDirectories(tempDir.toPath());
         Files.createDirectories(outputDir.toPath());
         final Path copied = Files.copy(targetJar.toPath(), tempDir.toPath().resolve(targetJar.getName()), StandardCopyOption.REPLACE_EXISTING);
         final ToolProviderSupport.Result patchResult = ToolProviderSupport.run("jar", "uf", copied.toRealPath().toString(),
                 "-C", infoFile.getParentFile().getAbsolutePath(), "module-info.class");
         if (patchResult.exitCode == 0) {
-            Files.copy(copied, outputDir.toPath().resolve(patchedJarName(targetJar)), StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(copied, outputDir.toPath().resolve(getInjectedJarName(targetJar)), StandardCopyOption.REPLACE_EXISTING);
         }
         Files.deleteIfExists(copied);
         return patchResult;
     }
 
-    public static String patchedJarName(File targetJar) {
+    public static String getInjectedJarName(File targetJar) {
         return targetJar.getName();
     }
 
@@ -62,6 +62,6 @@ public class PatchToJarTask extends DefaultTask {
 
     @OutputFile
     public Provider<RegularFile> getPatchedJar() {
-        return outputDir.file(targetJar.map(RegularFile::getAsFile).map(PatchToJarTask::patchedJarName));
+        return outputDir.file(targetJar.map(RegularFile::getAsFile).map(InjectModuleInfoTask::getInjectedJarName));
     }
 }

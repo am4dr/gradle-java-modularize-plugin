@@ -12,7 +12,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class PatchToJarTaskStaticTest {
+class InjectModuleInfoTaskStaticTest {
 
     static final Path tmpTestDir = Paths.get("build", "tmp", "test");
     Path tempDir;
@@ -56,15 +56,15 @@ class PatchToJarTaskStaticTest {
     }
 
     @Test
-    void patchingTest() throws IOException {
+    void injectionTest() throws IOException {
         final Path outDir = tempDir.resolve("out");
         final Path infoFile = tempDir.resolve("module-info.class");
         Files.createFile(infoFile);
         Files.write(infoFile, this.getClass().getResourceAsStream("module-info.class").readAllBytes());
-        final ToolProviderSupport.Result result = PatchToJarTask.patch(SampleTargetJars.UNNAMED.file, infoFile.toFile(), tempDir.toFile(), outDir.toFile());
+        final ToolProviderSupport.Result result = InjectModuleInfoTask.inject(SampleTargetJars.UNNAMED.file, infoFile.toFile(), tempDir.toFile(), outDir.toFile());
 
         assertEquals(0, result.exitCode, result.out + result.err);
-        final Path patched = outDir.resolve(SampleTargetJars.UNNAMED.file.getName());
-        assertTrue(Files.isRegularFile(patched));
+        final Path injected = outDir.resolve(SampleTargetJars.UNNAMED.file.getName());
+        assertTrue(Files.isRegularFile(injected));
     }
 }

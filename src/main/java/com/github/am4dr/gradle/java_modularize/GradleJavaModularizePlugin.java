@@ -65,14 +65,14 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
                         generateModuleInfo.getDependencies().setFrom(files);
                         final CompileModuleInfoJavaTask compileModuleInfo = getCompileModuleInfoJavaTask(project, ar, moduleId);
                         compileModuleInfo.getDependencies().setFrom(files);
-                        final PatchToJarTask patchJar = getPatchToJarTask(project, ar, moduleId);
+                        final InjectModuleInfoTask injectModuleInfo = getInjectModuleInfoTask(project, ar, moduleId);
                         compileModuleInfo.getInfoFile().set(generateModuleInfo.getOutputDir().file("module-info.java"));
                         compileModuleInfo.getInputs().files(generateModuleInfo.getOutputs());
-                        patchJar.getInfoFile().set(compileModuleInfo.getModuleInfoClassFile());
-                        patchJar.getInputs().files(compileModuleInfo.getOutputs());
-                        modularizeTask.dependsOn(patchJar);
+                        injectModuleInfo.getInfoFile().set(compileModuleInfo.getModuleInfoClassFile());
+                        injectModuleInfo.getInputs().files(compileModuleInfo.getOutputs());
+                        modularizeTask.dependsOn(injectModuleInfo);
 
-                        project.getArtifacts().add(module.name, patchJar.getPatchedJar(), copyArtifactCoordinatesFrom(ar));
+                        project.getArtifacts().add(module.name, injectModuleInfo.getPatchedJar(), copyArtifactCoordinatesFrom(ar));
                     });
             deps.forEach(modularizeArtifacts);
             if (module.recursive) {
@@ -119,12 +119,12 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
         return nameParts;
     }
 
-    private static PatchToJarTask getPatchToJarTask(Project project, ResolvedArtifact ar, List<String> moduleId) {
-        final PatchToJarTask patchJar = project.getTasks().maybeCreate(taskName("patchJar", moduleId), PatchToJarTask.class);
-        final Provider<Directory> patchedJarOutputDir = project.getLayout().getBuildDirectory().dir(PatchToJarTask.class.getSimpleName() + "/" + moduleId);
-        patchJar.getOutputDir().set(patchedJarOutputDir);
-        patchJar.getTargetJar().set(ar.getFile());
-        return patchJar;
+    private static InjectModuleInfoTask getInjectModuleInfoTask(Project project, ResolvedArtifact ar, List<String> moduleId) {
+        final InjectModuleInfoTask injectModuleInfo = project.getTasks().maybeCreate(taskName("injectModuleInfo", moduleId), InjectModuleInfoTask.class);
+        final Provider<Directory> injectedJarOutputDir = project.getLayout().getBuildDirectory().dir(InjectModuleInfoTask.class.getSimpleName() + "/" + moduleId);
+        injectModuleInfo.getOutputDir().set(injectedJarOutputDir);
+        injectModuleInfo.getTargetJar().set(ar.getFile());
+        return injectModuleInfo;
     }
 
     private static CompileModuleInfoJavaTask getCompileModuleInfoJavaTask(Project project, ResolvedArtifact ar, List<String> moduleId) {
