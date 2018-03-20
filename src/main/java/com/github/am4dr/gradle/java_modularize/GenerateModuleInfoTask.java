@@ -52,7 +52,7 @@ public class GenerateModuleInfoTask extends DefaultTask {
         if (dependencies.isEmpty()) {
             return List.of();
         }
-        return List.of("--module-path", String.join(File.pathSeparator, dependencies.stream().map(File::toString).collect(Collectors.toList())), "--add-modules", "ALL-MODULE-PATH");
+        return List.of("--module-path", dependencies.stream().map(File::toString).collect(Collectors.joining(File.pathSeparator)), "--add-modules", "ALL-MODULE-PATH");
     }
 
     @InputFile
