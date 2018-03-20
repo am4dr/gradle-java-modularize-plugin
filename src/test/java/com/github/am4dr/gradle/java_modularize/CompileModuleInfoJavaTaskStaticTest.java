@@ -2,14 +2,13 @@ package com.github.am4dr.gradle.java_modularize;
 
 import com.github.am4dr.gradle.java_modularize.util.DependentJar;
 import com.github.am4dr.gradle.java_modularize.util.SampleTargetJars;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeAll;
+import com.github.am4dr.gradle.java_modularize.util.TempDirSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
-import java.nio.file.*;
-import java.nio.file.attribute.BasicFileAttributes;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.Set;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -17,45 +16,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class CompileModuleInfoJavaTaskStaticTest {
 
-    static final Path tmpTestDir = Paths.get("build", "tmp", "test");
+    final TempDirSupport tempDirSupport;
     Path tempDir;
 
-    @BeforeAll
-    static void beforeAll() throws IOException {
-        Files.createDirectories(tmpTestDir);
+    public CompileModuleInfoJavaTaskStaticTest() throws IOException {
+        this.tempDirSupport = new TempDirSupport(false);
     }
 
     @BeforeEach
-    void beforeEach() throws IOException {
-        tempDir = Files.createTempDirectory(tmpTestDir, this.getClass().getSimpleName());
-        tempDir.toFile().deleteOnExit();
-    }
-
-    @AfterEach
-    void cleanTempDir() throws IOException {
-        Files.walkFileTree(tempDir, new FileVisitor<>() {
-            @Override
-            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-                return FileVisitResult.CONTINUE;
-            }
-
-            @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                Files.deleteIfExists(file);
-                return FileVisitResult.CONTINUE;
-            }
-
-            @Override
-            public FileVisitResult visitFileFailed(Path file, IOException exc) {
-                return FileVisitResult.SKIP_SUBTREE;
-            }
-
-            @Override
-            public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
-                dir.toFile().deleteOnExit();
-                return FileVisitResult.CONTINUE;
-            }
-        });
+    void setup() throws IOException {
+        tempDir = tempDirSupport.create(this.getClass());
     }
 
     @Test
