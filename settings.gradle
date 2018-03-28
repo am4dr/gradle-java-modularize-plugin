@@ -1,4 +1,8 @@
 rootProject.name = 'java-modularize-plugin'
 
-include 'targetJars'
-include 'dependentJar'
+def testTargets = ['targetJars', 'dependentJar']
+testTargets.each {
+    include it
+    project(":$it").projectDir = file("test-targets/$it")
+}
+

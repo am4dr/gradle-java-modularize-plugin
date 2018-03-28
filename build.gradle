@@ -89,7 +89,8 @@ project(':dependentJar') {
 sourceSets {
     test {
         resources {
-            srcDirs = ['src/test/resources', 'targetJars/build/libs', 'dependentJar/build/libs']
+            def testTargetLibsDirs = [':targetJars', ':dependentJar'].collect { new File(project(it).buildDir, 'libs') }
+            srcDirs = ['src/test/resources', *testTargetLibsDirs]
         }
     }
 }
