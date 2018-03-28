@@ -1,5 +1,7 @@
 package com.github.am4dr.gradle.java_modularize;
 
+import com.github.am4dr.gradle.java_modularize.tooling.ToolProviderSupport;
+import com.github.am4dr.gradle.java_modularize.tooling.Tooling;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.Directory;
@@ -16,7 +18,6 @@ import java.nio.file.Files;
 import java.nio.file.StandardCopyOption;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 public class JlinkTask extends DefaultTask {
 
@@ -54,28 +55,14 @@ public class JlinkTask extends DefaultTask {
             options.add(String.format("--compress=%d", compress.get()));
         }
         if (args.get().isEmpty()) {
-            args.set(createArgs(modulePaths, modules.get(), launchScriptName.get(), launcherClass.get(), tempDir, options.get()));
+            args.set(Tooling.createArgs(modulePaths, modules.get(), launchScriptName.get(), launcherClass.get(), tempDir, options.get()));
         }
-        final ToolProviderSupport.Result result = jlink(args.get());
+        final ToolProviderSupport.Result result = Tooling.jlink(args.get());
         if (result.exitCode != 0) {
             throw new TaskExecutionException(this, new IllegalStateException("exit code is not 0: " + result.out + "\n\n" + result.err));
         }
 //        getProject().sync(sync -> sync.from(tempDir).into(getOutputDir()));
         Files.move(tempDir.toPath(), getOutputDir().get().getAsFile().toPath(), StandardCopyOption.REPLACE_EXISTING);
-    }
-
-    public static ToolProviderSupport.Result jlink(List<String> args) {
-        return ToolProviderSupport.run("jlink", args);
-    }
-
-    public static ArrayList<String> createArgs(List<File> modulePaths, List<String> modules, String name, String launcherClassName, File outputDir, List<String> options) {
-        final ArrayList<String> args = new ArrayList<>(List.of(
-                "--module-path", modulePaths.stream().map(File::toString).collect(Collectors.joining(File.pathSeparator)),
-                "--launcher", String.format("%s=%s", name, launcherClassName),
-                "--output", outputDir.toString()));
-        args.addAll(options);
-        modules.forEach(m -> args.addAll(List.of("--add-modules", m)));
-        return args;
     }
 
     @Input

@@ -1,4 +1,4 @@
-package com.github.am4dr.gradle.java_modularize.util;
+package com.github.am4dr.gradle.java_modularize.tooling;
 
 import java.io.IOException;
 import java.nio.file.*;
@@ -39,8 +39,8 @@ public class TempDirSupport {
             }
 
             @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                Files.deleteIfExists(file);
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                file.toFile().deleteOnExit();
                 return FileVisitResult.CONTINUE;
             }
 

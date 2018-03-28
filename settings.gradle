@@ -1,7 +1,12 @@
 rootProject.name = 'java-modularize-plugin'
 
+include 'tooling'
+include 'testTargets'
+project(':testTargets').projectDir = file("test-targets")
+
 def testTargets = ['standalones', 'dependents']
 testTargets.each {
     include it
     project(":$it").projectDir = file("test-targets/$it")
 }
+

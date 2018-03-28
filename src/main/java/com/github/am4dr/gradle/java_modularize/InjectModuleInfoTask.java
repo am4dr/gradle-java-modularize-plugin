@@ -1,5 +1,7 @@
 package com.github.am4dr.gradle.java_modularize;
 
+import com.github.am4dr.gradle.java_modularize.tooling.ToolProviderSupport;
+import com.github.am4dr.gradle.java_modularize.tooling.Tooling;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.DirectoryProperty;
 import org.gradle.api.file.RegularFile;
@@ -9,9 +11,6 @@ import org.gradle.api.tasks.*;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 
 public class InjectModuleInfoTask extends DefaultTask {
 
@@ -22,27 +21,11 @@ public class InjectModuleInfoTask extends DefaultTask {
     @TaskAction
     void run() throws IOException {
         final File tempDir = getTemporaryDir();
-        final ToolProviderSupport.Result result = inject(targetJar.get().getAsFile(), infoFile.getAsFile().get(), tempDir, outputDir.get().getAsFile());
+        final ToolProviderSupport.Result result = Tooling.injectModuleInfo(targetJar.get().getAsFile(), infoFile.getAsFile().get(), tempDir);
         if (result.exitCode != 0) {
             throw new TaskExecutionException(this, new IllegalStateException("exit code is not 0: " + result.err));
         }
-    }
-
-    public static ToolProviderSupport.Result inject(File targetJar, File infoFile, File tempDir, File outputDir) throws IOException {
-        Files.createDirectories(tempDir.toPath());
-        Files.createDirectories(outputDir.toPath());
-        final Path copied = Files.copy(targetJar.toPath(), tempDir.toPath().resolve(targetJar.getName()), StandardCopyOption.REPLACE_EXISTING);
-        final ToolProviderSupport.Result patchResult = ToolProviderSupport.run("jar", "uf", copied.toRealPath().toString(),
-                "-C", infoFile.getParentFile().getAbsolutePath(), "module-info.class");
-        if (patchResult.exitCode == 0) {
-            Files.copy(copied, outputDir.toPath().resolve(getInjectedJarName(targetJar)), StandardCopyOption.REPLACE_EXISTING);
-        }
-        Files.deleteIfExists(copied);
-        return patchResult;
-    }
-
-    public static String getInjectedJarName(File targetJar) {
-        return targetJar.getName();
+        getProject().copy(c -> c.from(getProject().fileTree(tempDir)).into(outputDir.getAsFile()));
     }
 
     @InputFile
@@ -62,6 +45,6 @@ public class InjectModuleInfoTask extends DefaultTask {
 
     @OutputFile
     public Provider<RegularFile> getPatchedJar() {
-        return outputDir.file(targetJar.map(RegularFile::getAsFile).map(InjectModuleInfoTask::getInjectedJarName));
+        return outputDir.file(targetJar.map(RegularFile::getAsFile).map(File::getName));
     }
 }

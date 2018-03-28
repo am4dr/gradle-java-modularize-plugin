@@ -1,4 +1,4 @@
-package com.github.am4dr.gradle.java_modularize;
+package com.github.am4dr.gradle.java_modularize.tooling;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -8,12 +8,14 @@ import java.util.List;
 import java.util.Optional;
 import java.util.spi.ToolProvider;
 
+import static java.lang.String.format;
+
 public class ToolProviderSupport {
 
     public static ToolProvider getToolProvider(String name) {
         final Optional<ToolProvider> tool = ToolProvider.findFirst(name);
         if (!tool.isPresent()) {
-            throw new IllegalStateException(String.format("%s is not found by %s", name, ToolProvider.class.getName()));
+            throw new IllegalStateException(format("%s is not found by %s", name, ToolProvider.class.getName()));
         }
         return tool.get();
     }
@@ -44,6 +46,11 @@ public class ToolProviderSupport {
             this.exitCode = exitCode;
             this.out = out;
             this.err = err;
+        }
+
+        @Override
+        public String toString() {
+            return String.format("exit code: %d%n%nOutput: %s%n%nError: %s", exitCode, out, err);
         }
     }
 }
