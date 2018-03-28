@@ -1,5 +1,7 @@
 package com.github.am4dr.gradle.java_modularize;
 
+import com.github.am4dr.gradle.java_modularize.tooling.ToolProviderSupport;
+import com.github.am4dr.gradle.java_modularize.tooling.Tooling;
 import com.github.am4dr.gradle.java_modularize.util.DependentJar;
 import com.github.am4dr.gradle.java_modularize.util.SampleTargetJars;
 import com.github.am4dr.gradle.java_modularize.util.TempDirSupport;
@@ -83,6 +85,6 @@ class GenerateModuleInfoTaskStaticTest {
     }
 
     ToolProviderSupport.Result executeGenerateMethod(boolean isOpenModule, File targetJar, Set<File> dependencies) {
-        return GenerateModuleInfoTask.generateModuleInfoJava(isOpenModule, targetJar, tempDir.toFile(), dependencies);
+        return Tooling.generateModuleInfoJava(isOpenModule, targetJar, tempDir.toFile(), dependencies);
     }
 }

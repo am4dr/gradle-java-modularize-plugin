@@ -1,5 +1,7 @@
 package com.github.am4dr.gradle.java_modularize;
 
+import com.github.am4dr.gradle.java_modularize.tooling.ToolProviderSupport;
+import com.github.am4dr.gradle.java_modularize.tooling.Tooling;
 import org.gradle.api.DefaultTask;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.DirectoryProperty;
@@ -13,10 +15,6 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 public class GenerateModuleInfoTask extends DefaultTask {
 
@@ -32,27 +30,13 @@ public class GenerateModuleInfoTask extends DefaultTask {
     @TaskAction
     public void run() throws IOException {
         final File tempDir = getTemporaryDir();
-        final ToolProviderSupport.Result result = generateModuleInfoJava(isOpenModule.getOrElse(false), targetJar.get().getAsFile(), tempDir, dependencies.getFiles());
+        final ToolProviderSupport.Result result = Tooling.generateModuleInfoJava(isOpenModule.getOrElse(false), targetJar.get().getAsFile(), tempDir, dependencies.getFiles());
         if (result.exitCode != 0) {
             throw new TaskExecutionException(this, new IllegalStateException("exit code is not 0: " + result.err));
         }
         final Path infoFile = Files.find(tempDir.toPath(), Integer.MAX_VALUE, (path, attr) -> path.getFileName().toString().equals("module-info.java"))
                 .findAny().orElseThrow(() -> new TaskExecutionException(this, new IllegalStateException("module-info.java has not generated")));
         Files.copy(infoFile, getModuleInfoJavaFile().get().getAsFile().toPath());
-    }
-
-    public static ToolProviderSupport.Result generateModuleInfoJava(boolean isOpenModule, File targetJar, File outputDir, Set<File> dependencies) {
-        final String moduleTypeOption = isOpenModule ? "--generate-open-module" : "--generate-module-info";
-        final ArrayList<String> args = new ArrayList<>(createModulePathArg(dependencies));
-        args.addAll(List.of(moduleTypeOption, outputDir.getAbsolutePath(), targetJar.getAbsolutePath()));
-        return ToolProviderSupport.run("jdeps", args);
-    }
-
-    private static List<String> createModulePathArg(Set<File> dependencies) {
-        if (dependencies.isEmpty()) {
-            return List.of();
-        }
-        return List.of("--module-path", dependencies.stream().map(File::toString).collect(Collectors.joining(File.pathSeparator)), "--add-modules", "ALL-MODULE-PATH");
     }
 
     @InputFile

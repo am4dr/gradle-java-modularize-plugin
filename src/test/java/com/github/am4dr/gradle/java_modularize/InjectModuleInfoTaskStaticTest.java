@@ -1,5 +1,7 @@
 package com.github.am4dr.gradle.java_modularize;
 
+import com.github.am4dr.gradle.java_modularize.tooling.ToolProviderSupport;
+import com.github.am4dr.gradle.java_modularize.tooling.Tooling;
 import com.github.am4dr.gradle.java_modularize.util.SampleTargetJars;
 import com.github.am4dr.gradle.java_modularize.util.TempDirSupport;
 import org.junit.jupiter.api.BeforeEach;
@@ -32,7 +34,7 @@ class InjectModuleInfoTaskStaticTest {
         final Path infoFile = tempDir.resolve("module-info.class");
         Files.createFile(infoFile);
         Files.write(infoFile, this.getClass().getResourceAsStream("module-info.class").readAllBytes());
-        final ToolProviderSupport.Result result = InjectModuleInfoTask.inject(SampleTargetJars.UNNAMED.file, infoFile.toFile(), tempDir.toFile(), outDir.toFile());
+        final ToolProviderSupport.Result result = Tooling.injectModuleInfo(SampleTargetJars.UNNAMED.file, infoFile.toFile(), tempDir.toFile(), outDir.toFile());
 
         assertEquals(0, result.exitCode, result.out + result.err);
         final Path injected = outDir.resolve(SampleTargetJars.UNNAMED.file.getName());

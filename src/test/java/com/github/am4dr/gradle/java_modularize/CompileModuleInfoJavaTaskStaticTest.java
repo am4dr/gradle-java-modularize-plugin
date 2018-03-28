@@ -1,5 +1,7 @@
 package com.github.am4dr.gradle.java_modularize;
 
+import com.github.am4dr.gradle.java_modularize.tooling.ToolProviderSupport;
+import com.github.am4dr.gradle.java_modularize.tooling.Tooling;
 import com.github.am4dr.gradle.java_modularize.util.DependentJar;
 import com.github.am4dr.gradle.java_modularize.util.SampleTargetJars;
 import com.github.am4dr.gradle.java_modularize.util.TempDirSupport;
@@ -33,7 +35,7 @@ class CompileModuleInfoJavaTaskStaticTest {
         final Path infoFile = tempDir.resolve("module-info.java");
         Files.createFile(infoFile);
         Files.write(infoFile, "module sample.module { }".getBytes());
-        final String name = CompileModuleInfoJavaTask.extractModuleName(infoFile.toFile());
+        final String name = Tooling.extractModuleName(infoFile.toFile());
         assertEquals("sample.module", name);
     }
 
@@ -45,7 +47,7 @@ class CompileModuleInfoJavaTaskStaticTest {
                 "module sample.unnamed {",
                 "   exports sample;",
                 "}").getBytes());
-        final String name = CompileModuleInfoJavaTask.extractModuleName(infoFile.toFile());
+        final String name = Tooling.extractModuleName(infoFile.toFile());
         assertEquals("sample.unnamed", name);
     }
 
@@ -55,7 +57,7 @@ class CompileModuleInfoJavaTaskStaticTest {
         final Path infoFile = tempDir.resolve("module-info.java");
         Files.createFile(infoFile);
         Files.write(infoFile, "module sample.unnamed { exports sample; }".getBytes());
-        final ToolProviderSupport.Result result = CompileModuleInfoJavaTask.compile("sample.unnamed", infoFile.toFile(), SampleTargetJars.UNNAMED.file, outDir.toFile(), Set.of());
+        final ToolProviderSupport.Result result = Tooling.compileModuleInfoJava("sample.unnamed", infoFile.toFile(), SampleTargetJars.UNNAMED.file, outDir.toFile(), Set.of());
         assertEquals(0, result.exitCode);
         assertTrue(Files.isRegularFile(outDir.resolve("module-info.class")));
     }
@@ -66,7 +68,7 @@ class CompileModuleInfoJavaTaskStaticTest {
         final Path infoFile = tempDir.resolve("module-info.java");
         Files.createFile(infoFile);
         Files.write(infoFile, "module sample.dependent { exports sample.dependent; }".getBytes());
-        final ToolProviderSupport.Result result = CompileModuleInfoJavaTask.compile("sample.dependent", infoFile.toFile(), DependentJar.DEPENDENT.file, outDir.toFile(), Set.of(SampleTargetJars.UNNAMED.file));
+        final ToolProviderSupport.Result result = Tooling.compileModuleInfoJava("sample.dependent", infoFile.toFile(), DependentJar.DEPENDENT.file, outDir.toFile(), Set.of(SampleTargetJars.UNNAMED.file));
         assertEquals(0, result.exitCode, String.join("\n\n", result.out, result.err));
         assertTrue(Files.isRegularFile(outDir.resolve("module-info.class")));
     }

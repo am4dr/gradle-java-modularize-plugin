@@ -35,6 +35,7 @@ allprojects {
 }
 
 dependencies {
+    api project(':tooling')
     implementation gradleApi()
 
     testImplementation gradleTestKit()
@@ -90,6 +91,15 @@ project(':tooling') {
     version = "0.1.0"
     group = "com.github.am4dr.gradle.java-modularize-plugin"
     archivesBaseName = "tooling"
+
+    dependencies {
+        testImplementation libraries.junit_api
+        testRuntime libraries.junit_runtime
+    }
+
+    test {
+        useJUnitPlatform()
+    }
 }
 
 sourceSets {
