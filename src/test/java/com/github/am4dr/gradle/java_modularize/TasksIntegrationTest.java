@@ -1,8 +1,8 @@
 package com.github.am4dr.gradle.java_modularize;
 
-import com.github.am4dr.gradle.java_modularize.util.DependentJar;
+import com.github.am4dr.gradle.java_modularize.testing.target.DependentJars;
+import com.github.am4dr.gradle.java_modularize.testing.target.StandaloneJars;
 import com.github.am4dr.gradle.java_modularize.util.GradleBuildSupport;
-import com.github.am4dr.gradle.java_modularize.util.SampleTargetJars;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.GradleRunner;
 import org.junit.jupiter.api.BeforeAll;
@@ -40,7 +40,7 @@ public class TasksIntegrationTest {
     void tasksIntegrationTest() throws IOException {
         final BuildResult result = build.append("import java.util.jar.JarFile",
                 "modularize {",
-                "   module 'sampleModule', '" + SampleTargetJars.UNNAMED.id + "'",
+                "   module 'sampleModule', '" + StandaloneJars.UNNAMED.id + "'",
                 "}",
                 "task show {",
                 "   dependsOn tasks.modularize",
@@ -59,8 +59,8 @@ public class TasksIntegrationTest {
     void specifyMultipleDescriptorsToModuleTest() throws IOException {
         final BuildResult result = build.append("",
                 "modularize {",
-                "   module 'sampleModule', '" + SampleTargetJars.UNNAMED.id + "'",
-                "   module 'sampleModule', '" + SampleTargetJars.AUTONAMED.id + "'",
+                "   module 'sampleModule', '" + StandaloneJars.UNNAMED.id + "'",
+                "   module 'sampleModule', '" + StandaloneJars.AUTONAMED.id + "'",
                 "}",
                 "task show {",
                 "   dependsOn tasks.modularize",
@@ -80,7 +80,7 @@ public class TasksIntegrationTest {
     void targetContainsModuleInfoClassTest() throws IOException {
         final BuildResult result = build.append("import java.util.jar.JarFile",
                 "modularize {",
-                "   module 'sampleModule', '" + SampleTargetJars.NAMED.id + "'",
+                "   module 'sampleModule', '" + StandaloneJars.NAMED.id + "'",
                 "}",
                 "task show {",
                 "   dependsOn tasks.modularize",
@@ -101,7 +101,7 @@ public class TasksIntegrationTest {
     void targetHasDependenciesTest() throws IOException {
         final BuildResult result = build.append("import java.util.jar.JarFile",
                 "modularize {",
-                "   module 'sampleModule', '" + DependentJar.DEPENDENT.id + "'",
+                "   module 'sampleModule', '" + DependentJars.DEPENDENT.id + "'",
                 "}",
                 "task show {",
                 "   dependsOn tasks.modularize",
@@ -122,7 +122,7 @@ public class TasksIntegrationTest {
         final BuildResult result = build.append("import java.util.jar.JarFile",
                 "modularize {",
                 "   module ('sampleModule') {",
-                "       descriptors += '" + DependentJar.DEPENDENT.id + "'",
+                "       descriptors += '" + DependentJars.DEPENDENT.id + "'",
                 "       recursive = true",
                 "   }",
                 "}",

@@ -1,7 +1,7 @@
 package com.github.am4dr.gradle.java_modularize;
 
+import com.github.am4dr.gradle.java_modularize.testing.target.StandaloneJars;
 import com.github.am4dr.gradle.java_modularize.util.GradleBuildSupport;
-import com.github.am4dr.gradle.java_modularize.util.SampleTargetJars;
 import org.gradle.testkit.runner.UnexpectedBuildFailure;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -54,7 +54,7 @@ class GenerateModuleInfoTaskTest {
 
     @Test
     void taskRunWithInputsTest() throws IOException {
-        final String targetJarString = SampleTargetJars.UNNAMED.file.toString().replace("\\", "/");
+        final String targetJarString = StandaloneJars.UNNAMED.file.toString().replace("\\", "/");
         final Path outputDir = build.tempBuildDir.resolve("output");
         final String outputDirString = outputDir.toString().replace("\\", "/");
         build.append(

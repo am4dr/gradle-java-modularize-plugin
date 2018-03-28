@@ -1,7 +1,7 @@
 package com.github.am4dr.gradle.java_modularize;
 
+import com.github.am4dr.gradle.java_modularize.testing.target.StandaloneJars;
 import com.github.am4dr.gradle.java_modularize.util.GradleBuildSupport;
-import com.github.am4dr.gradle.java_modularize.util.SampleTargetJars;
 import org.gradle.testkit.runner.BuildResult;
 import org.gradle.testkit.runner.GradleRunner;
 import org.junit.jupiter.api.BeforeAll;
@@ -69,7 +69,7 @@ public class JavaModularizeExtensionTest {
                 "modularize {",
                 "   modules {",
                 "       sampleModule {",
-                "           descriptors = ['" + SampleTargetJars.UNNAMED.id + "']",
+                "           descriptors = ['" + StandaloneJars.UNNAMED.id + "']",
                 "       }",
                 "   }",
                 "}"
@@ -80,7 +80,7 @@ public class JavaModularizeExtensionTest {
     void extensionModuleMethodTest() throws IOException {
         build.append("",
                 "modularize {",
-                "   module 'sampleModule', '" + SampleTargetJars.UNNAMED.id + "'",
+                "   module 'sampleModule', '" + StandaloneJars.UNNAMED.id + "'",
                 "}"
         ).build();
     }
@@ -89,8 +89,8 @@ public class JavaModularizeExtensionTest {
     void configurationTest() throws IOException {
         final BuildResult result = build.append("",
                 "modularize {",
-                "   module 'sampleModule1', '" + SampleTargetJars.UNNAMED.id + "'",
-                "   module 'sampleModule2', '" + SampleTargetJars.UNNAMED.id + "'",
+                "   module 'sampleModule1', '" + StandaloneJars.UNNAMED.id + "'",
+                "   module 'sampleModule2', '" + StandaloneJars.UNNAMED.id + "'",
                 "}",
                 "task show {",
                 "   doLast { project.configurations.forEach(System.out.&println) }",
@@ -105,8 +105,8 @@ public class JavaModularizeExtensionTest {
     void recursiveFlagTest() throws IOException {
         build.append("",
                 "modularize {",
-                "   module 'sampleModule1', '" + SampleTargetJars.UNNAMED.id + "', false",
-                "   module 'sampleModule2', '" + SampleTargetJars.UNNAMED.id + "', true",
+                "   module 'sampleModule1', '" + StandaloneJars.UNNAMED.id + "', false",
+                "   module 'sampleModule2', '" + StandaloneJars.UNNAMED.id + "', true",
                 "}",
                 "task show {",
                 "   doLast { project.configurations.forEach(System.out.&println) }",
@@ -119,7 +119,7 @@ public class JavaModularizeExtensionTest {
         build.append("",
                 "modularize {",
                 "   module('sampleModule1') {",
-                "       descriptors += '" + SampleTargetJars.UNNAMED.id + "'",
+                "       descriptors += '" + StandaloneJars.UNNAMED.id + "'",
                 "       recursive = false",
                 "   }",
                 "}",

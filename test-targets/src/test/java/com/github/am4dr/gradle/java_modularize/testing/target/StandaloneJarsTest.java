@@ -1,6 +1,5 @@
-package com.github.am4dr.gradle.java_modularize;
+package com.github.am4dr.gradle.java_modularize.testing.target;
 
-import com.github.am4dr.gradle.java_modularize.util.SampleTargetJars;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -11,17 +10,17 @@ import java.util.jar.JarFile;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class TargetJarTest {
+class StandaloneJarsTest {
 
     @Test
     void test() {
-        final URL resource = this.getClass().getClassLoader().getResource(SampleTargetJars.UNNAMED.file.getName());
+        final URL resource = this.getClass().getClassLoader().getResource(StandaloneJars.UNNAMED.file.getName());
         assertNotNull(resource);
     }
 
     @Test
     void namedModuleContainsModuleInfo() throws IOException {
-        final boolean hasModuleInfo = new JarFile(SampleTargetJars.NAMED.file).stream()
+        final boolean hasModuleInfo = new JarFile(StandaloneJars.NAMED.file).stream()
                 .map(JarEntry::getName)
                 .anyMatch("module-info.class"::equals);
         assertTrue(hasModuleInfo);

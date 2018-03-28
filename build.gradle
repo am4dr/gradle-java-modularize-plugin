@@ -1,6 +1,5 @@
 plugins {
     id 'com.github.ben-manes.versions' version '0.17.0'
-    id 'java-library'
     id 'java-gradle-plugin'
     id "com.gradle.plugin-publish" version "0.9.10"
     id 'maven'
@@ -21,10 +20,12 @@ ext {
             ]
     ]
     standaloneTargetNames = ['unnamed', 'autonamed', 'named']
-    testTargetsVersion = '1.1'
+    testTargetsVersion = '2.0'
 }
 
 allprojects {
+    apply plugin: 'java-library'
+
     sourceCompatibility = jdkVersion
     targetCompatibility = jdkVersion
 
@@ -32,19 +33,18 @@ allprojects {
         mavenLocal()
         jcenter()
     }
-}
 
-dependencies {
-    api project(':tooling')
-    implementation gradleApi()
+    dependencies {
+        testImplementation libraries.junit_api
+        testRuntime libraries.junit_runtime
+    }
 
-    testImplementation gradleTestKit()
-    testImplementation libraries.junit_api
-    testRuntime libraries.junit_runtime
+    test {
+        useJUnitPlatform()
+    }
 }
 
 project(':standalones') {
-    apply plugin: 'java-library'
     apply plugin: 'maven'
 
     group = "com.github.am4dr.gradle.java-modularize-plugin"
@@ -69,7 +69,6 @@ project(':standalones') {
     }
 }
 project(':dependents') {
-    apply plugin: 'java-library'
     apply plugin: 'maven'
 
     group = "com.github.am4dr.gradle.java-modularize-plugin"
@@ -83,9 +82,15 @@ project(':dependents') {
         dependsOn ":standalones:install"
     }
 }
+project(':testTargets') {
+    group = "com.github.am4dr.gradle.java-modularize-plugin"
+    version = testTargetsVersion
+    archivesBaseName = "test-targets"
+
+    addTestTargetSamplesToTestResources(it)
+}
 
 project(':tooling') {
-    apply plugin: 'java-library'
     apply plugin: 'maven'
 
     version = "0.1.0"
@@ -93,31 +98,24 @@ project(':tooling') {
     archivesBaseName = "tooling"
 
     dependencies {
-        testImplementation libraries.junit_api
-        testRuntime libraries.junit_runtime
+        testImplementation project(':testTargets')
     }
 
-    test {
-        useJUnitPlatform()
-    }
+    addTestTargetSamplesToTestResources(it)
 }
 
-sourceSets {
-    test {
-        resources {
-            def testTargetLibsDirs = [':standalones', ':dependents'].collect { new File(project(it).buildDir, 'libs') }
-            srcDirs = ['src/test/resources', *testTargetLibsDirs]
-        }
-    }
+dependencies {
+    api project(':tooling')
+    implementation gradleApi()
+
+    testImplementation project(':testTargets')
+    testImplementation gradleTestKit()
 }
-processTestResources {
-    dependsOn(standaloneTargetNames.collect { name -> ":standalones:${name}Jar" })
-    dependsOn ':dependents:jar'
-}
+addTestTargetSamplesToTestResources(project)
 test {
     dependsOn ":standalones:install", ":dependents:install"
-    useJUnitPlatform()
 }
+
 pluginBundle {
     website = 'https://github.com/am4dr/gradle-java-modularize-plugin'
     vcsUrl = 'https://github.com/am4dr/gradle-java-modularize-plugin'
@@ -128,6 +126,22 @@ pluginBundle {
         modularizePlugin {
             id = 'com.github.am4dr.java-modularize'
             displayName = 'Gradle Java Modularize Plugin'
+        }
+    }
+}
+
+def addTestTargetSamplesToTestResources(Project project) {
+    project.with {
+        sourceSets {
+            test {
+                resources {
+                    srcDirs += [':standalones', ':dependents'].collect { new File(project.project(it).buildDir, 'libs') }
+                }
+            }
+        }
+        processTestResources {
+            dependsOn(standaloneTargetNames.collect { name -> ":standalones:${name}Jar" })
+            dependsOn ':dependents:jar'
         }
     }
 }

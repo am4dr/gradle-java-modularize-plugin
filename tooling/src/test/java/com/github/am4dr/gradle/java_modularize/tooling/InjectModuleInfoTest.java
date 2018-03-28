@@ -1,9 +1,6 @@
-package com.github.am4dr.gradle.java_modularize;
+package com.github.am4dr.gradle.java_modularize.tooling;
 
-import com.github.am4dr.gradle.java_modularize.tooling.ToolProviderSupport;
-import com.github.am4dr.gradle.java_modularize.tooling.Tooling;
-import com.github.am4dr.gradle.java_modularize.util.SampleTargetJars;
-import com.github.am4dr.gradle.java_modularize.util.TempDirSupport;
+import com.github.am4dr.gradle.java_modularize.testing.target.StandaloneJars;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -14,12 +11,12 @@ import java.nio.file.Path;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class InjectModuleInfoTaskStaticTest {
+public class InjectModuleInfoTest {
 
     final TempDirSupport tempDirSupport;
     Path tempDir;
 
-    public InjectModuleInfoTaskStaticTest() throws IOException {
+    public InjectModuleInfoTest() throws IOException {
         this.tempDirSupport = new TempDirSupport(false);
     }
 
@@ -34,10 +31,10 @@ class InjectModuleInfoTaskStaticTest {
         final Path infoFile = tempDir.resolve("module-info.class");
         Files.createFile(infoFile);
         Files.write(infoFile, this.getClass().getResourceAsStream("module-info.class").readAllBytes());
-        final ToolProviderSupport.Result result = Tooling.injectModuleInfo(SampleTargetJars.UNNAMED.file, infoFile.toFile(), tempDir.toFile(), outDir.toFile());
+        final ToolProviderSupport.Result result = Tooling.injectModuleInfo(StandaloneJars.UNNAMED.file, infoFile.toFile(), tempDir.toFile(), outDir.toFile());
 
         assertEquals(0, result.exitCode, result.out + result.err);
-        final Path injected = outDir.resolve(SampleTargetJars.UNNAMED.file.getName());
+        final Path injected = outDir.resolve(StandaloneJars.UNNAMED.file.getName());
         assertTrue(Files.isRegularFile(injected));
     }
 }

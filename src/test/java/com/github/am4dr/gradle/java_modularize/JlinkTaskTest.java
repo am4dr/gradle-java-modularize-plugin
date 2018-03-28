@@ -1,7 +1,7 @@
 package com.github.am4dr.gradle.java_modularize;
 
+import com.github.am4dr.gradle.java_modularize.testing.target.StandaloneJars;
 import com.github.am4dr.gradle.java_modularize.util.GradleBuildSupport;
-import com.github.am4dr.gradle.java_modularize.util.SampleTargetJars;
 import org.gradle.testkit.runner.BuildResult;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,7 +33,7 @@ class JlinkTaskTest {
         final BuildResult result = build.append("import " + JlinkTask.class.getName(),
                 "import java.nio.file.*",
                 "task jlink(type: " + JlinkTask.class.getSimpleName() + ") {",
-                "   modulePaths.from(project.files('" + SampleTargetJars.NAMED.file.toString().replace("\\", "\\\\") + "'))",
+                "   modulePaths.from(project.files('" + StandaloneJars.NAMED.file.toString().replace("\\", "\\\\") + "'))",
                 "   modules.add('sample.named')",
                 "   launcherClass = 'sample.named/sample.named.Sample'",
                 "   launchScriptName = 'named'",
