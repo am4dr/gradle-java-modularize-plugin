@@ -6,7 +6,7 @@ plugins {
 }
 
 group = 'com.github.am4dr.gradle'
-version = '0.3.0'
+version = '0.4.0-alpha-1'
 
 ext {
     jdkVersion = JavaVersion.VERSION_1_9
@@ -120,7 +120,7 @@ pluginBundle {
     website = 'https://github.com/am4dr/gradle-java-modularize-plugin'
     vcsUrl = 'https://github.com/am4dr/gradle-java-modularize-plugin'
     description = 'module-info.class generation and injection'
-    tags = ['jigsaw', 'modules']
+    tags = ['jigsaw', 'modules', 'jlink']
 
     plugins {
         modularizePlugin {
