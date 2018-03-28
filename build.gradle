@@ -20,8 +20,8 @@ ext {
                     'org.junit.jupiter:junit-jupiter-engine:'+junit_version,
             ]
     ]
-    targetJarNames = ['unnamed', 'autonamed', 'named']
-    targetSampleVersion = '1.1'
+    standaloneTargetNames = ['unnamed', 'autonamed', 'named']
+    testTargetsVersion = '1.1'
 }
 
 allprojects {
@@ -42,63 +42,61 @@ dependencies {
     testRuntime libraries.junit_runtime
 }
 
-project(':targetJars') {
+project(':standalones') {
     apply plugin: 'java-library'
     apply plugin: 'maven'
 
     group = "com.github.am4dr.gradle.java-modularize-plugin"
-    version = targetSampleVersion
+    version = testTargetsVersion
     archivesBaseName = "test-target-sample"
 
-    targetJarNames.each { name ->
-        sourceSets.create(name) {}
-        configurations.create(name)
-    }
     def jarTaskNamer = { name -> "${name}Jar" }
-    targetJarNames.each { String name ->
-        def jarTaskName = jarTaskNamer(name)
-        def jarTask = tasks.create(jarTaskName, Jar) { Jar jar ->
-            jar.classifier = name
-            jar.from sourceSets.getByName(name).output
+    standaloneTargetNames.each { String name ->
+        sourceSets.create(name)
+        def jarTask = tasks.create(jarTaskNamer(name), Jar) {
+            from sourceSets.getByName(name).output
+            classifier = name
         }
+        configurations.create(name)
         artifacts.add(name, jarTask)
         artifacts.add("archives", jarTask)
     }
-    tasks.getByName(jarTaskNamer("autonamed")) { Jar task ->
-        task.manifest { m ->
-            m.attributes.put('Automatic-Module-Name', 'sample.autonamed')
+    tasks.getByName(jarTaskNamer("autonamed")) {
+        manifest {
+            attributes.put('Automatic-Module-Name', 'sample.autonamed')
         }
     }
 }
-project(':dependentJar') {
+project(':dependents') {
     apply plugin: 'java-library'
     apply plugin: 'maven'
 
     group = "com.github.am4dr.gradle.java-modularize-plugin"
-    version = targetSampleVersion
+    version = testTargetsVersion
     archivesBaseName = "test-dependent-target-sample"
 
     dependencies {
-        api "$group:test-target-sample:$targetSampleVersion:unnamed"
+        api "$group:test-target-sample:$testTargetsVersion:unnamed"
     }
     compileJava {
-        dependsOn ":targetJars:install"
+        dependsOn ":standalones:install"
     }
 }
 
 sourceSets {
     test {
         resources {
-            srcDirs = ['src/test/resources', 'targetJars/build/libs', 'dependentJar/build/libs']
+            def testTargetLibsDirs = [':standalones', ':dependents'].collect { new File(project(it).buildDir, 'libs') }
+            srcDirs = ['src/test/resources', *testTargetLibsDirs]
         }
     }
 }
 processTestResources {
-    dependsOn(targetJarNames.collect { name -> ":targetJars:${name}Jar" })
-    dependsOn ':dependentJar:jar'
+    dependsOn(standaloneTargetNames.collect { name -> ":standalones:${name}Jar" })
+    dependsOn ':dependents:jar'
 }
 test {
-    dependsOn ":targetJars:install", ":dependentJar:install"
+    dependsOn ":standalones:install", ":dependents:install"
     useJUnitPlatform()
 }
 pluginBundle {
