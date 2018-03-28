@@ -31,7 +31,7 @@ public class InjectModuleInfoTest {
         final Path infoFile = tempDir.resolve("module-info.class");
         Files.createFile(infoFile);
         Files.write(infoFile, this.getClass().getResourceAsStream("module-info.class").readAllBytes());
-        final ToolProviderSupport.Result result = Tooling.injectModuleInfo(StandaloneJars.UNNAMED.file, infoFile.toFile(), tempDir.toFile(), outDir.toFile());
+        final ToolProviderSupport.Result result = Tooling.injectModuleInfo(StandaloneJars.UNNAMED.file, infoFile.toFile(), outDir.toFile());
 
         assertEquals(0, result.exitCode, result.out + result.err);
         final Path injected = outDir.resolve(StandaloneJars.UNNAMED.file.getName());

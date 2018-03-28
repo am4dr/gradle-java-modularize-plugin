@@ -48,17 +48,10 @@ public final class Tooling {
         return moduleName;
     }
 
-    public static ToolProviderSupport.Result injectModuleInfo(File targetJar, File infoFile, File tempDir, File outputDir) throws IOException {
-        Files.createDirectories(tempDir.toPath());
+    public static ToolProviderSupport.Result injectModuleInfo(File targetJar, File infoFile, File outputDir) throws IOException {
         Files.createDirectories(outputDir.toPath());
-        final Path copied = Files.copy(targetJar.toPath(), tempDir.toPath().resolve(targetJar.getName()), StandardCopyOption.REPLACE_EXISTING);
-        final ToolProviderSupport.Result patchResult = ToolProviderSupport.run("jar", "uf", copied.toRealPath().toString(),
-                "-C", infoFile.getParentFile().getAbsolutePath(), "module-info.class");
-        if (patchResult.exitCode == 0) {
-            Files.copy(copied, outputDir.toPath().resolve(targetJar.getName()), StandardCopyOption.REPLACE_EXISTING);
-        }
-        Files.deleteIfExists(copied);
-        return patchResult;
+        final Path copied = Files.copy(targetJar.toPath(), outputDir.toPath().resolve(targetJar.getName()), StandardCopyOption.REPLACE_EXISTING);
+        return ToolProviderSupport.run("jar", "uf", copied.toRealPath().toString(), "-C", infoFile.getParentFile().getAbsolutePath(), "module-info.class");
     }
 
     public static ToolProviderSupport.Result jlink(List<String> args) {

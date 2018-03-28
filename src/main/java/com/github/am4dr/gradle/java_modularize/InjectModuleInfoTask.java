@@ -21,10 +21,11 @@ public class InjectModuleInfoTask extends DefaultTask {
     @TaskAction
     void run() throws IOException {
         final File tempDir = getTemporaryDir();
-        final ToolProviderSupport.Result result = Tooling.injectModuleInfo(targetJar.get().getAsFile(), infoFile.getAsFile().get(), tempDir, outputDir.get().getAsFile());
+        final ToolProviderSupport.Result result = Tooling.injectModuleInfo(targetJar.get().getAsFile(), infoFile.getAsFile().get(), tempDir);
         if (result.exitCode != 0) {
             throw new TaskExecutionException(this, new IllegalStateException("exit code is not 0: " + result.err));
         }
+        getProject().copy(c -> c.from(getProject().fileTree(tempDir)).into(outputDir.getAsFile()));
     }
 
     @InputFile
