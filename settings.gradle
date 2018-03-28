@@ -5,3 +5,5 @@ testTargets.each {
     include it
     project(":$it").projectDir = file("test-targets/$it")
 }
+
+include 'tooling'

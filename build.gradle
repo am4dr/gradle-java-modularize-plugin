@@ -83,6 +83,15 @@ project(':dependents') {
     }
 }
 
+project(':tooling') {
+    apply plugin: 'java-library'
+    apply plugin: 'maven'
+
+    version = "0.1.0"
+    group = "com.github.am4dr.gradle.java-modularize-plugin"
+    archivesBaseName = "tooling"
+}
+
 sourceSets {
     test {
         resources {
