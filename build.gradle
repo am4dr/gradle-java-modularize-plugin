@@ -1,8 +1,9 @@
 plugins {
     id 'com.github.ben-manes.versions' version '0.17.0'
     id 'java-gradle-plugin'
-    id "com.gradle.plugin-publish" version "0.9.10"
     id 'maven'
+    id "com.gradle.plugin-publish" version "0.9.10"
+    id "com.jfrog.bintray" version "1.7.3"
 }
 
 group = 'com.github.am4dr.gradle'
@@ -92,6 +93,7 @@ project(':testTargets') {
 
 project(':tooling') {
     apply plugin: 'maven'
+    apply plugin: 'com.jfrog.bintray'
 
     version = "0.1.0"
     group = "com.github.am4dr.gradle.java-modularize-plugin"
@@ -102,6 +104,7 @@ project(':tooling') {
     }
 
     addTestTargetSamplesToTestResources(it)
+    configureBintrayUpload(it, 'gradle-java-modularize-plugin-tooling')
 }
 
 dependencies {
@@ -112,13 +115,15 @@ dependencies {
     testImplementation gradleTestKit()
 }
 addTestTargetSamplesToTestResources(project)
+configureBintrayUpload(project, 'gradle-java-modularize-plugin')
+
 test {
     dependsOn ":standalones:install", ":dependents:install"
 }
 
 pluginBundle {
     website = 'https://github.com/am4dr/gradle-java-modularize-plugin'
-    vcsUrl = 'https://github.com/am4dr/gradle-java-modularize-plugin'
+    vcsUrl = 'https://github.com/am4dr/gradle-java-modularize-plugin.git'
     description = 'module-info.class generation and injection'
     tags = ['jigsaw', 'modules', 'jlink']
 
@@ -142,6 +147,53 @@ def addTestTargetSamplesToTestResources(Project project) {
         processTestResources {
             dependsOn(standaloneTargetNames.collect { name -> ":standalones:${name}Jar" })
             dependsOn ':dependents:jar'
+        }
+    }
+}
+
+def configureBintrayUpload(Project project, String bintrayPackage) {
+    project.with {
+        javadoc {
+            options {
+                links 'https://docs.gradle.org/4.6/javadoc'
+                links 'https://docs.oracle.com/javase/9/docs/api'
+                locale 'en_US'
+                addBooleanOption('html5', true)
+            }
+        }
+        tasks.create('sourceJar', Jar) {
+            from sourceSets.main.allSource
+            classifier = 'sources'
+        }
+        tasks.create('javadocJar', Jar) {
+            from javadoc
+            classifier = 'javadoc'
+        }
+        configurations {
+            jarForBintrayUpload
+        }
+        artifacts {
+            jarForBintrayUpload jar
+            jarForBintrayUpload sourceJar
+            jarForBintrayUpload javadocJar
+        }
+        bintray {
+            user = bintrayUsername
+            key = bintrayApiKey
+            pkg {
+                repo = 'maven'
+                name = bintrayPackage
+                licenses = ['MIT']
+                vcsUrl = 'https://github.com/am4dr/gradle-java-modularize-plugin.git'
+                websiteUrl = 'https://github.com/am4dr/gradle-java-modularize-plugin'
+                githubRepo = 'am4dr/gradle-java-modularize-plugin'
+                version {
+                    name = project.version
+                    vcsTag = project.version
+                    released  = new Date()
+                }
+            }
+            configurations = ['jarForBintrayUpload']
         }
     }
 }
