@@ -121,10 +121,9 @@ public class TasksIntegrationTest {
     @Test
     void recursiveDependencyResolutionTest() throws IOException {
         final BuildResult result = build.append("import java.util.jar.JarFile",
-                "import " + ModuleDescriptor.class.getName(),
                 "modularize {",
                 "   module ('sampleModule') {",
-                "       descriptors += ModuleDescriptor.of('" + DependentJars.DEPENDENT.id + "')",
+                "       descriptors += descriptor('" + DependentJars.DEPENDENT.id + "')",
                 "       recursive = true",
                 "   }",
                 "}",

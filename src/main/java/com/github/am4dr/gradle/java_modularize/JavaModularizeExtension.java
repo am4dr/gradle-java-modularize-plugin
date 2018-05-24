@@ -26,7 +26,7 @@ public class JavaModularizeExtension {
 
     public void module(String name, String descriptor, boolean recursive) {
         final ModuleSpec moduleSpec = modules.maybeCreate(name);
-        moduleSpec.descriptors.add(ModuleDescriptor.of(descriptor));
+        moduleSpec.descriptors.add(ModuleSpec.descriptor(descriptor));
         moduleSpec.recursive = recursive;
     }
 
@@ -35,7 +35,7 @@ public class JavaModularizeExtension {
     }
     public void module(String name, Configuration configuration, boolean recursive) {
         final ModuleSpec moduleSpec = modules.maybeCreate(name);
-        moduleSpec.descriptors.add(ModuleDescriptor.of(configuration));
+        moduleSpec.descriptors.add(ModuleSpec.descriptor(configuration));
         moduleSpec.recursive = recursive;
     }
 
@@ -53,6 +53,13 @@ public class JavaModularizeExtension {
 
         public ModuleSpec(String name) {
             this.name = name;
+        }
+
+        public static ModuleDescriptor descriptor(String mavenCoordinates) {
+            return new ModuleDescriptor.StringModuleDescriptor(mavenCoordinates);
+        }
+        public static ModuleDescriptor descriptor(Configuration configuration) {
+            return new ModuleDescriptor.ConfigurationModuleDescriptor(configuration);
         }
     }
 }
