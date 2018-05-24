@@ -1,5 +1,6 @@
 package com.github.am4dr.gradle.java_modularize;
 
+import com.github.am4dr.gradle.java_modularize.testing.target.DependentJars;
 import com.github.am4dr.gradle.java_modularize.testing.target.StandaloneJars;
 import com.github.am4dr.gradle.java_modularize.util.GradleBuildSupport;
 import org.gradle.testkit.runner.BuildResult;
@@ -123,6 +124,25 @@ public class JavaModularizeExtensionTest {
                 "   module('sampleModule1') {",
                 "       descriptors += ModuleDescriptor.of('" + StandaloneJars.UNNAMED.id + "')",
                 "   }",
+                "}",
+                "task show {",
+                "   doLast { project.configurations.forEach(System.out.&println) }",
+                "}"
+        ).runner(r -> r.withArguments("show", "-q")).build();
+    }
+
+    @Test
+    void acceptConfigurationAsAModuleDescriptorTest() throws IOException {
+        build.append("",
+                "import " + ModuleDescriptor.class.getName(),
+                "configurations {",
+                "   config",
+                "}",
+                "dependencies {",
+                "   config '" + DependentJars.DEPENDENT.id + "'",
+                "}",
+                "modularize {",
+                "   module('sampleModule1', configurations.config)",
                 "}",
                 "task show {",
                 "   doLast { project.configurations.forEach(System.out.&println) }",

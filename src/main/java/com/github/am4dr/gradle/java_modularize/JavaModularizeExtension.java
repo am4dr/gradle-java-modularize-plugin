@@ -30,6 +30,9 @@ public class JavaModularizeExtension {
         moduleSpec.recursive = recursive;
     }
 
+    public void module(String name, Configuration configuration) {
+        module(name, configuration, ModuleSpec.DEFAULT_RECURSIVE);
+    }
     public void module(String name, Configuration configuration, boolean recursive) {
         final ModuleSpec moduleSpec = modules.maybeCreate(name);
         moduleSpec.descriptors.add(ModuleDescriptor.of(configuration));
