@@ -3,6 +3,7 @@ package com.github.am4dr.gradle.java_modularize;
 import org.gradle.api.Action;
 import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.Configuration;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -20,12 +21,18 @@ public class JavaModularizeExtension {
     }
 
     public void module(String name, String descriptor) {
-        modules.maybeCreate(name).descriptors.add(descriptor);
+        module(name, descriptor, ModuleSpec.DEFAULT_RECURSIVE);
     }
 
     public void module(String name, String descriptor, boolean recursive) {
         final ModuleSpec moduleSpec = modules.maybeCreate(name);
-        moduleSpec.descriptors.add(descriptor);
+        moduleSpec.descriptors.add(ModuleDescriptor.of(descriptor));
+        moduleSpec.recursive = recursive;
+    }
+
+    public void module(String name, Configuration configuration, boolean recursive) {
+        final ModuleSpec moduleSpec = modules.maybeCreate(name);
+        moduleSpec.descriptors.add(ModuleDescriptor.of(configuration));
         moduleSpec.recursive = recursive;
     }
 
@@ -35,9 +42,11 @@ public class JavaModularizeExtension {
 
     public static class ModuleSpec {
 
+        static boolean DEFAULT_RECURSIVE = false;
+
         String name;
-        Set<String> descriptors = new HashSet<>();
-        boolean recursive = false;
+        Set<ModuleDescriptor> descriptors = new HashSet<>();
+        boolean recursive = DEFAULT_RECURSIVE;
 
         public ModuleSpec(String name) {
             this.name = name;

@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -29,25 +30,34 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
     @Override
     public void apply(Project project) {
         final JavaModularizeExtension modularize = project.getExtensions().create(extensionName, JavaModularizeExtension.class, project);
-        modularize.modules.whenObjectAdded(module -> {
-            project.getConfigurations().maybeCreate(resolverConfigNamer.apply(module.name)).setVisible(false);
-            project.getConfigurations().maybeCreate(module.name);
-        });
+        modularize.modules.whenObjectAdded(module -> project.getConfigurations().maybeCreate(module.name));
         project.getTasks().maybeCreate("modularize");
         project.afterEvaluate(GradleJavaModularizePlugin::afterEval);
     }
 
     private static void afterEval(Project project) {
-        final Task modularizeUmbrellaTask = project.getTasks().maybeCreate("modularize");
+        final Task modularizeLifeCycleTask = project.getTasks().maybeCreate("modularize");
         final JavaModularizeExtension modularizeExtension = project.getExtensions().getByType(JavaModularizeExtension.class);
         modularizeExtension.modules.withType(JavaModularizeExtension.ModuleSpec.class, module -> {
             final Task modularizeTask = project.getTasks().maybeCreate("modularize" + capitalize(module.name));
-            modularizeUmbrellaTask.dependsOn(modularizeTask);
+            modularizeLifeCycleTask.dependsOn(modularizeTask);
             final String resolverConfigName = resolverConfigNamer.apply(module.name);
-            final Configuration resolverConfig = project.getConfigurations().getByName(resolverConfigName);
+            final Configuration resolverConfig = project.getConfigurations().maybeCreate(resolverConfigName);
+            resolverConfig.setVisible(false);
             module.descriptors.stream()
-                    .filter(it -> it != null && !it.equals(""))
-                    .forEach(desc -> project.getDependencies().add(resolverConfigName, desc));
+                    .filter(Objects::nonNull)
+                    .forEach(desc -> {
+                        if (desc instanceof ModuleDescriptor.StringModuleDescriptor) {
+                            final String mavenCoordinate = ((ModuleDescriptor.StringModuleDescriptor) desc).mavenCoordinate;
+                            if (!mavenCoordinate.equals("")) {
+                                project.getDependencies().add(resolverConfigName, mavenCoordinate);
+                            }
+                        }
+                        else if (desc instanceof ModuleDescriptor.ConfigurationModuleDescriptor) {
+                            final Configuration configuration = ((ModuleDescriptor.ConfigurationModuleDescriptor) desc).configuration;
+                            resolverConfig.extendsFrom(configuration);
+                        }
+                    });
             final ResolvedConfiguration resolvedConfiguration = resolverConfig.getResolvedConfiguration();
             final List<ResolvedDependency> deps = new ArrayList<>(resolvedConfiguration.getFirstLevelModuleDependencies());
             final Consumer<ResolvedDependency> modularizeArtifacts = dep -> dep.getModuleArtifacts().stream()
@@ -85,6 +95,7 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
         });
     }
 
+    // TODO use ar.type & ar.extension
     private static Action<ConfigurablePublishArtifact> copyArtifactCoordinatesFrom(ResolvedArtifact ar) {
         return artifact -> {
             artifact.setName(ar.getName());

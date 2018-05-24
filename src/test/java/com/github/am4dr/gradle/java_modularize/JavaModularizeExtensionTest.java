@@ -66,10 +66,11 @@ public class JavaModularizeExtensionTest {
     @Test
     void modulesBlockTest() throws IOException {
         build.append("",
+                "import " + ModuleDescriptor.class.getName(),
                 "modularize {",
                 "   modules {",
                 "       sampleModule {",
-                "           descriptors = ['" + StandaloneJars.UNNAMED.id + "']",
+                "           descriptors = [ModuleDescriptor.of('" + StandaloneJars.UNNAMED.id + "')]",
                 "       }",
                 "   }",
                 "}"
@@ -117,10 +118,10 @@ public class JavaModularizeExtensionTest {
     @Test
     void moduleConfigByClosureTest() throws IOException {
         build.append("",
+                "import " + ModuleDescriptor.class.getName(),
                 "modularize {",
                 "   module('sampleModule1') {",
-                "       descriptors += '" + StandaloneJars.UNNAMED.id + "'",
-                "       recursive = false",
+                "       descriptors += ModuleDescriptor.of('" + StandaloneJars.UNNAMED.id + "')",
                 "   }",
                 "}",
                 "task show {",
@@ -128,5 +129,4 @@ public class JavaModularizeExtensionTest {
                 "}"
         ).runner(r -> r.withArguments("show", "-q")).build();
     }
-
 }
