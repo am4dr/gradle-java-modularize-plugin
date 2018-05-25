@@ -8,6 +8,7 @@ import org.gradle.api.artifacts.*;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.Directory;
 import org.gradle.api.provider.Provider;
+import org.gradle.api.tasks.StopExecutionException;
 
 import java.io.File;
 import java.io.IOException;
@@ -63,12 +64,6 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
             final Consumer<ResolvedDependency> modularizeArtifacts = dep -> dep.getModuleArtifacts().stream()
                     .filter(ar -> ar.getType().equals("jar"))
                     .forEach(ar -> {
-                        final boolean containsModuleInfo = containsModuleInfo(ar.getFile());
-                        if (containsModuleInfo) {
-                            project.getArtifacts().add(module.name, ar.getFile(), copyArtifactCoordinatesFrom(ar));
-                            return;
-                        }
-
                         final ConfigurableFileCollection files = project.files(getAllDependencyJarFiles(dep));
                         List<String> moduleId = createModuleId(dep, ar);
                         final GenerateModuleInfoTask generateModuleInfo = getGenerateModuleInfoTask(project, ar, moduleId);
@@ -135,6 +130,13 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
         final Provider<Directory> injectedJarOutputDir = project.getLayout().getBuildDirectory().dir(InjectModuleInfoTask.class.getSimpleName() + "/" + moduleId);
         injectModuleInfo.getOutputDir().set(injectedJarOutputDir);
         injectModuleInfo.getTargetJar().set(ar.getFile());
+        injectModuleInfo.doFirst(it -> {
+            final File targetJar = injectModuleInfo.getTargetJar().getAsFile().get();
+            if (containsModuleInfo(targetJar)) {
+                project.copy(c -> c.from(injectModuleInfo.getTargetJar()).into(injectModuleInfo.getOutputDir()));
+                throw new StopExecutionException(String.format("%s contains module-info.class", targetJar));
+            }
+        });
         return injectModuleInfo;
     }
 
@@ -143,6 +145,7 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
         final Provider<Directory> moduleInfoClassDir = project.getLayout().getBuildDirectory().dir(CompileModuleInfoJavaTask.class.getSimpleName() + "/" + moduleId);
         compileModuleInfo.getOutputDir().set(moduleInfoClassDir);
         compileModuleInfo.getTargetJar().set(ar.getFile());
+        compileModuleInfo.onlyIf(it -> !containsModuleInfo(compileModuleInfo.getTargetJar().getAsFile().get()));
         return compileModuleInfo;
     }
 
@@ -151,6 +154,7 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
         final Provider<Directory> moduleInfoJavaDir = project.getLayout().getBuildDirectory().dir(GenerateModuleInfoTask.class.getSimpleName() + "/" + moduleId);
         generateModuleInfo.getOutputDir().set(moduleInfoJavaDir);
         generateModuleInfo.getTargetJar().set(ar.getFile());
+        generateModuleInfo.onlyIf(it -> !containsModuleInfo(generateModuleInfo.getTargetJar().getAsFile().get()));
         return generateModuleInfo;
     }
 
