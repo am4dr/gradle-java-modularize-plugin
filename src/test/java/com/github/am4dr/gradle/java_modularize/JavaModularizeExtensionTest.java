@@ -1,5 +1,6 @@
 package com.github.am4dr.gradle.java_modularize;
 
+import com.github.am4dr.gradle.java_modularize.testing.target.DependentJars;
 import com.github.am4dr.gradle.java_modularize.testing.target.StandaloneJars;
 import com.github.am4dr.gradle.java_modularize.util.GradleBuildSupport;
 import org.gradle.testkit.runner.BuildResult;
@@ -69,7 +70,7 @@ public class JavaModularizeExtensionTest {
                 "modularize {",
                 "   modules {",
                 "       sampleModule {",
-                "           descriptors = ['" + StandaloneJars.UNNAMED.id + "']",
+                "           descriptors = [descriptor('" + StandaloneJars.UNNAMED.id + "')]",
                 "       }",
                 "   }",
                 "}"
@@ -119,8 +120,7 @@ public class JavaModularizeExtensionTest {
         build.append("",
                 "modularize {",
                 "   module('sampleModule1') {",
-                "       descriptors += '" + StandaloneJars.UNNAMED.id + "'",
-                "       recursive = false",
+                "       descriptors += descriptor('" + StandaloneJars.UNNAMED.id + "')",
                 "   }",
                 "}",
                 "task show {",
@@ -129,4 +129,41 @@ public class JavaModularizeExtensionTest {
         ).runner(r -> r.withArguments("show", "-q")).build();
     }
 
+    @Test
+    void acceptConfigurationAsAModuleDescriptorTest() throws IOException {
+        build.append("",
+                "configurations {",
+                "   config",
+                "}",
+                "dependencies {",
+                "   config '" + DependentJars.DEPENDENT.id + "'",
+                "}",
+                "modularize {",
+                "   module('sampleModule1', configurations.config)",
+                "}",
+                "task show {",
+                "   doLast { project.configurations.forEach(System.out.&println) }",
+                "}"
+        ).runner(r -> r.withArguments("show", "-q")).build();
+    }
+
+    @Test
+    void acceptDependencyAsAModuleDescriptorTest() throws Exception {
+        build.append("",
+                "configurations {",
+                "   configTarget",
+                "   config",
+                "}",
+                "dependencies {",
+                "   configTarget '" + DependentJars.DEPENDENT.id + "'",
+                "   config project(path: ':', configuration: 'config')",
+                "}",
+                "modularize {",
+                "   module('sampleModule1', configurations.config)",
+                "}",
+                "task show {",
+                "   doLast { project.configurations.forEach(System.out.&println) }",
+                "}"
+        ).runner(r -> r.withArguments("show", "-q")).build();
+    }
 }

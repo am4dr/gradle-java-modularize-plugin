@@ -3,6 +3,8 @@ package com.github.am4dr.gradle.java_modularize;
 import org.gradle.api.Action;
 import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.Project;
+import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.Dependency;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -20,12 +22,30 @@ public class JavaModularizeExtension {
     }
 
     public void module(String name, String descriptor) {
-        modules.maybeCreate(name).descriptors.add(descriptor);
+        module(name, descriptor, ModuleSpec.DEFAULT_RECURSIVE);
     }
 
     public void module(String name, String descriptor, boolean recursive) {
         final ModuleSpec moduleSpec = modules.maybeCreate(name);
-        moduleSpec.descriptors.add(descriptor);
+        moduleSpec.descriptors.add(ModuleSpec.descriptor(descriptor));
+        moduleSpec.recursive = recursive;
+    }
+
+    public void module(String name, Configuration configuration) {
+        module(name, configuration, ModuleSpec.DEFAULT_RECURSIVE);
+    }
+    public void module(String name, Configuration configuration, boolean recursive) {
+        final ModuleSpec moduleSpec = modules.maybeCreate(name);
+        moduleSpec.descriptors.add(ModuleSpec.descriptor(configuration));
+        moduleSpec.recursive = recursive;
+    }
+
+    public void module(String name, Dependency dependency) {
+
+    }
+    public void module(String name, Dependency dependency, boolean recursive) {
+        final ModuleSpec moduleSpec = modules.maybeCreate(name);
+        moduleSpec.descriptors.add(ModuleSpec.descriptor(dependency));
         moduleSpec.recursive = recursive;
     }
 
@@ -35,12 +55,24 @@ public class JavaModularizeExtension {
 
     public static class ModuleSpec {
 
+        static boolean DEFAULT_RECURSIVE = false;
+
         String name;
-        Set<String> descriptors = new HashSet<>();
-        boolean recursive = false;
+        Set<ModuleDescriptor> descriptors = new HashSet<>();
+        boolean recursive = DEFAULT_RECURSIVE;
 
         public ModuleSpec(String name) {
             this.name = name;
+        }
+
+        public static ModuleDescriptor descriptor(String mavenCoordinates) {
+            return new ModuleDescriptor.StringModuleDescriptor(mavenCoordinates);
+        }
+        public static ModuleDescriptor descriptor(Configuration configuration) {
+            return new ModuleDescriptor.ConfigurationModuleDescriptor(configuration);
+        }
+        public static ModuleDescriptor descriptor(Dependency dependency) {
+            return new ModuleDescriptor.DependencyModuleDescriptor(dependency);
         }
     }
 }

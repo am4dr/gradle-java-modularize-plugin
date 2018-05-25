@@ -117,12 +117,13 @@ public class TasksIntegrationTest {
         ).runner(r -> r.withArguments("show")).build();
         assertTrue(Arrays.stream(result.getOutput().split("\n")).anyMatch(it -> it.contains("test-dependent-target-sample:jar:jar:null")), result.getOutput());
     }
+
     @Test
     void recursiveDependencyResolutionTest() throws IOException {
         final BuildResult result = build.append("import java.util.jar.JarFile",
                 "modularize {",
                 "   module ('sampleModule') {",
-                "       descriptors += '" + DependentJars.DEPENDENT.id + "'",
+                "       descriptors += descriptor('" + DependentJars.DEPENDENT.id + "')",
                 "       recursive = true",
                 "   }",
                 "}",
@@ -137,6 +138,34 @@ public class TasksIntegrationTest {
                 "       }",
                 "       assert arts.any { it.name == 'test-dependent-target-sample' }",
                 "       assert arts.any { it.name == 'test-target-sample' && it.classifier == 'unnamed' }",
+                "   }",
+                "}"
+        ).runner(r -> r.withArguments("show")).build();
+    }
+
+    @Test
+    void configurationDescriptorTest() throws IOException {
+        final BuildResult result = build.append("import java.util.jar.JarFile",
+                "configurations {",
+                "   target",
+                "}",
+                "dependencies {",
+                "   target '" + DependentJars.DEPENDENT.id + "'",
+                "}",
+                "modularize {",
+                "   module('sampleModule', configurations.target, false)",
+                "}",
+                "task show {",
+                "   dependsOn tasks.modularize",
+                "   doLast {",
+                "       def arts = project.configurations.getByName('sampleModule').artifacts",
+                "       arts.each { art ->",
+                "           println art",
+                "           JarFile jarfile = new JarFile(art.file)",
+                "           assert jarfile.stream().anyMatch { it.name == 'module-info.class' }",
+                "       }",
+                "       assert arts.any { it.name == 'test-dependent-target-sample' }",
+                "       assert !arts.any { it.name == 'test-target-sample' && it.classifier == 'unnamed' }",
                 "   }",
                 "}"
         ).runner(r -> r.withArguments("show")).build();

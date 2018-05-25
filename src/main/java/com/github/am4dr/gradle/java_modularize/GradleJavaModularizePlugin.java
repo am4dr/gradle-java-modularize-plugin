@@ -8,12 +8,14 @@ import org.gradle.api.artifacts.*;
 import org.gradle.api.file.ConfigurableFileCollection;
 import org.gradle.api.file.Directory;
 import org.gradle.api.provider.Provider;
+import org.gradle.api.tasks.StopExecutionException;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -29,36 +31,43 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
     @Override
     public void apply(Project project) {
         final JavaModularizeExtension modularize = project.getExtensions().create(extensionName, JavaModularizeExtension.class, project);
-        modularize.modules.whenObjectAdded(module -> {
-            project.getConfigurations().maybeCreate(resolverConfigNamer.apply(module.name)).setVisible(false);
-            project.getConfigurations().maybeCreate(module.name);
-        });
+        modularize.modules.whenObjectAdded(module -> project.getConfigurations().maybeCreate(module.name));
         project.getTasks().maybeCreate("modularize");
         project.afterEvaluate(GradleJavaModularizePlugin::afterEval);
     }
 
     private static void afterEval(Project project) {
-        final Task modularizeUmbrellaTask = project.getTasks().maybeCreate("modularize");
+        final Task modularizeLifeCycleTask = project.getTasks().maybeCreate("modularize");
         final JavaModularizeExtension modularizeExtension = project.getExtensions().getByType(JavaModularizeExtension.class);
         modularizeExtension.modules.withType(JavaModularizeExtension.ModuleSpec.class, module -> {
             final Task modularizeTask = project.getTasks().maybeCreate("modularize" + capitalize(module.name));
-            modularizeUmbrellaTask.dependsOn(modularizeTask);
+            modularizeLifeCycleTask.dependsOn(modularizeTask);
             final String resolverConfigName = resolverConfigNamer.apply(module.name);
-            final Configuration resolverConfig = project.getConfigurations().getByName(resolverConfigName);
+            final Configuration resolverConfig = project.getConfigurations().maybeCreate(resolverConfigName);
+            resolverConfig.setVisible(false);
             module.descriptors.stream()
-                    .filter(it -> it != null && !it.equals(""))
-                    .forEach(desc -> project.getDependencies().add(resolverConfigName, desc));
+                    .filter(Objects::nonNull)
+                    .forEach(desc -> {
+                        if (desc instanceof ModuleDescriptor.StringModuleDescriptor) {
+                            final String mavenCoordinate = ((ModuleDescriptor.StringModuleDescriptor) desc).mavenCoordinate;
+                            if (!mavenCoordinate.equals("")) {
+                                project.getDependencies().add(resolverConfigName, mavenCoordinate);
+                            }
+                        }
+                        else if (desc instanceof ModuleDescriptor.ConfigurationModuleDescriptor) {
+                            final Configuration configuration = ((ModuleDescriptor.ConfigurationModuleDescriptor) desc).configuration;
+                            resolverConfig.extendsFrom(configuration);
+                        }
+                        else if (desc instanceof ModuleDescriptor.DependencyModuleDescriptor) {
+                            final Dependency dependency = ((ModuleDescriptor.DependencyModuleDescriptor) desc).dependency;
+                            project.getDependencies().add(resolverConfigName, dependency);
+                        }
+                    });
             final ResolvedConfiguration resolvedConfiguration = resolverConfig.getResolvedConfiguration();
             final List<ResolvedDependency> deps = new ArrayList<>(resolvedConfiguration.getFirstLevelModuleDependencies());
             final Consumer<ResolvedDependency> modularizeArtifacts = dep -> dep.getModuleArtifacts().stream()
                     .filter(ar -> ar.getType().equals("jar"))
                     .forEach(ar -> {
-                        final boolean containsModuleInfo = containsModuleInfo(ar.getFile());
-                        if (containsModuleInfo) {
-                            project.getArtifacts().add(module.name, ar.getFile(), copyArtifactCoordinatesFrom(ar));
-                            return;
-                        }
-
                         final ConfigurableFileCollection files = project.files(getAllDependencyJarFiles(dep));
                         List<String> moduleId = createModuleId(dep, ar);
                         final GenerateModuleInfoTask generateModuleInfo = getGenerateModuleInfoTask(project, ar, moduleId);
@@ -85,6 +94,7 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
         });
     }
 
+    // TODO use ar.type & ar.extension
     private static Action<ConfigurablePublishArtifact> copyArtifactCoordinatesFrom(ResolvedArtifact ar) {
         return artifact -> {
             artifact.setName(ar.getName());
@@ -124,6 +134,13 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
         final Provider<Directory> injectedJarOutputDir = project.getLayout().getBuildDirectory().dir(InjectModuleInfoTask.class.getSimpleName() + "/" + moduleId);
         injectModuleInfo.getOutputDir().set(injectedJarOutputDir);
         injectModuleInfo.getTargetJar().set(ar.getFile());
+        injectModuleInfo.doFirst(it -> {
+            final File targetJar = injectModuleInfo.getTargetJar().getAsFile().get();
+            if (containsModuleInfo(targetJar)) {
+                project.copy(c -> c.from(injectModuleInfo.getTargetJar()).into(injectModuleInfo.getOutputDir()));
+                throw new StopExecutionException(String.format("%s contains module-info.class", targetJar));
+            }
+        });
         return injectModuleInfo;
     }
 
@@ -132,6 +149,7 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
         final Provider<Directory> moduleInfoClassDir = project.getLayout().getBuildDirectory().dir(CompileModuleInfoJavaTask.class.getSimpleName() + "/" + moduleId);
         compileModuleInfo.getOutputDir().set(moduleInfoClassDir);
         compileModuleInfo.getTargetJar().set(ar.getFile());
+        compileModuleInfo.onlyIf(it -> !containsModuleInfo(compileModuleInfo.getTargetJar().getAsFile().get()));
         return compileModuleInfo;
     }
 
@@ -140,6 +158,7 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
         final Provider<Directory> moduleInfoJavaDir = project.getLayout().getBuildDirectory().dir(GenerateModuleInfoTask.class.getSimpleName() + "/" + moduleId);
         generateModuleInfo.getOutputDir().set(moduleInfoJavaDir);
         generateModuleInfo.getTargetJar().set(ar.getFile());
+        generateModuleInfo.onlyIf(it -> !containsModuleInfo(generateModuleInfo.getTargetJar().getAsFile().get()));
         return generateModuleInfo;
     }
 
