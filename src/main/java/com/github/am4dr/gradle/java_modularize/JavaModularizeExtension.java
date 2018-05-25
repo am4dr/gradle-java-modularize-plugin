@@ -4,6 +4,7 @@ import org.gradle.api.Action;
 import org.gradle.api.NamedDomainObjectContainer;
 import org.gradle.api.Project;
 import org.gradle.api.artifacts.Configuration;
+import org.gradle.api.artifacts.Dependency;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -39,6 +40,15 @@ public class JavaModularizeExtension {
         moduleSpec.recursive = recursive;
     }
 
+    public void module(String name, Dependency dependency) {
+
+    }
+    public void module(String name, Dependency dependency, boolean recursive) {
+        final ModuleSpec moduleSpec = modules.maybeCreate(name);
+        moduleSpec.descriptors.add(ModuleSpec.descriptor(dependency));
+        moduleSpec.recursive = recursive;
+    }
+
     public void module(String name, Action<ModuleSpec> config) {
         config.execute(modules.maybeCreate(name));
     }
@@ -60,6 +70,9 @@ public class JavaModularizeExtension {
         }
         public static ModuleDescriptor descriptor(Configuration configuration) {
             return new ModuleDescriptor.ConfigurationModuleDescriptor(configuration);
+        }
+        public static ModuleDescriptor descriptor(Dependency dependency) {
+            return new ModuleDescriptor.DependencyModuleDescriptor(dependency);
         }
     }
 }

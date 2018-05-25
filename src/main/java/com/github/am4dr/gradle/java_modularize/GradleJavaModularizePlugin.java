@@ -58,6 +58,10 @@ public class GradleJavaModularizePlugin implements Plugin<Project> {
                             final Configuration configuration = ((ModuleDescriptor.ConfigurationModuleDescriptor) desc).configuration;
                             resolverConfig.extendsFrom(configuration);
                         }
+                        else if (desc instanceof ModuleDescriptor.DependencyModuleDescriptor) {
+                            final Dependency dependency = ((ModuleDescriptor.DependencyModuleDescriptor) desc).dependency;
+                            project.getDependencies().add(resolverConfigName, dependency);
+                        }
                     });
             final ResolvedConfiguration resolvedConfiguration = resolverConfig.getResolvedConfiguration();
             final List<ResolvedDependency> deps = new ArrayList<>(resolvedConfiguration.getFirstLevelModuleDependencies());

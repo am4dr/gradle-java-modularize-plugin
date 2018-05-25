@@ -132,12 +132,31 @@ public class JavaModularizeExtensionTest {
     @Test
     void acceptConfigurationAsAModuleDescriptorTest() throws IOException {
         build.append("",
-                "import " + ModuleDescriptor.class.getName(),
                 "configurations {",
                 "   config",
                 "}",
                 "dependencies {",
                 "   config '" + DependentJars.DEPENDENT.id + "'",
+                "}",
+                "modularize {",
+                "   module('sampleModule1', configurations.config)",
+                "}",
+                "task show {",
+                "   doLast { project.configurations.forEach(System.out.&println) }",
+                "}"
+        ).runner(r -> r.withArguments("show", "-q")).build();
+    }
+
+    @Test
+    void acceptDependencyAsAModuleDescriptorTest() throws Exception {
+        build.append("",
+                "configurations {",
+                "   configTarget",
+                "   config",
+                "}",
+                "dependencies {",
+                "   configTarget '" + DependentJars.DEPENDENT.id + "'",
+                "   config project(path: ':', configuration: 'config')",
                 "}",
                 "modularize {",
                 "   module('sampleModule1', configurations.config)",
