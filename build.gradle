@@ -7,7 +7,7 @@ plugins {
 }
 
 group = 'com.github.am4dr.gradle'
-version = '0.5.0-SNAPSHOT'
+version = '0.5.0'
 
 ext {
     jdkVersion = JavaVersion.VERSION_1_9
