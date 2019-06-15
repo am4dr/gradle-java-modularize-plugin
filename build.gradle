@@ -7,7 +7,7 @@ plugins {
 }
 
 group = 'com.github.am4dr.gradle'
-version = '0.6.0-SNAPSHOT'
+version = '0.6.0'
 
 ext {
     jdkVersion = JavaVersion.VERSION_12
@@ -149,8 +149,8 @@ def configureBintrayUpload(Project project, String bintrayPackage) {
     project.with {
         javadoc {
             options {
-                links 'https://docs.gradle.org/4.6/javadoc'
-                links 'https://docs.oracle.com/javase/9/docs/api'
+                links 'https://docs.gradle.org/5.4.1/javadoc'
+                links 'https://docs.oracle.com/en/java/javase/12/docs/api'
                 locale 'en_US'
                 addBooleanOption('html5', true)
             }
