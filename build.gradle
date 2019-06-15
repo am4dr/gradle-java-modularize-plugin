@@ -1,5 +1,5 @@
 plugins {
-    id 'com.github.ben-manes.versions' version '0.17.0'
+    id 'com.github.ben-manes.versions' version '0.21.0'
     id 'java-gradle-plugin'
     id 'maven'
     id "com.gradle.plugin-publish" version "0.9.10"
@@ -7,18 +7,13 @@ plugins {
 }
 
 group = 'com.github.am4dr.gradle'
-version = '0.5.0'
+version = '0.6.0-SNAPSHOT'
 
 ext {
-    jdkVersion = JavaVersion.VERSION_1_9
-    junit_version = '5.1.0'
+    jdkVersion = JavaVersion.VERSION_12
+    junit_version = '5.4.2'
     libraries = [
-            'junit_api': [
-                    'org.junit.jupiter:junit-jupiter-api:'+junit_version,
-            ],
-            'junit_runtime': [
-                    'org.junit.jupiter:junit-jupiter-engine:'+junit_version,
-            ]
+            'junit': 'org.junit.jupiter:junit-jupiter:'+junit_version,
     ]
     standaloneTargetNames = ['unnamed', 'autonamed', 'named']
     testTargetsVersion = '2.0'
@@ -36,8 +31,7 @@ allprojects {
     }
 
     dependencies {
-        testImplementation libraries.junit_api
-        testRuntime libraries.junit_runtime
+        testImplementation libraries.junit
     }
 
     test {
