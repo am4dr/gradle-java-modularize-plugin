@@ -3,6 +3,7 @@ package com.github.am4dr.gradle.java_modularize;
 import com.github.am4dr.gradle.java_modularize.testing.target.StandaloneJars;
 import com.github.am4dr.gradle.java_modularize.util.GradleBuildSupport;
 import org.gradle.testkit.runner.UnexpectedBuildFailure;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,12 +26,18 @@ class GenerateModuleInfoTaskTest {
 
     @BeforeEach
     void setupBuildDir() throws IOException {
-        build = new GradleBuildSupport(this.getClass(), false);
+        build = new GradleBuildSupport(this.getClass(), true);
+        build.createFile(Path.of("settings.gradle"));
         build.append(
                 "plugins {",
                 "   id '" + GradleJavaModularizePlugin.PLUGIN_ID + "'",
                 "}"
         );
+    }
+
+    @AfterEach
+    void afterEach() throws IOException {
+        build.clean();
     }
 
     @Test

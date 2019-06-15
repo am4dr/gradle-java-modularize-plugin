@@ -7,10 +7,8 @@ import org.junit.jupiter.api.function.Executable;
 import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.OpenOption;
-import java.nio.file.Path;
-import java.nio.file.Paths;
+import java.nio.file.*;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.function.Consumer;
 
 import static java.nio.file.StandardOpenOption.APPEND;
@@ -87,4 +85,31 @@ public class GradleBuildSupport {
         consumer.accept(runner);
         return this;
     }
+
+    public void clean() throws IOException {
+        Files.walkFileTree(tempBuildDir, new FileVisitor<>() {
+            @Override
+            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) {
+                file.toFile().deleteOnExit();
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFileFailed(Path file, IOException exc) {
+                return FileVisitResult.SKIP_SUBTREE;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(Path dir, IOException exc) {
+                dir.toFile().deleteOnExit();
+                return FileVisitResult.CONTINUE;
+            }
+        });
+    }
+
 }

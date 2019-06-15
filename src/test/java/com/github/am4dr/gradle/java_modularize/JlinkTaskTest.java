@@ -3,11 +3,13 @@ package com.github.am4dr.gradle.java_modularize;
 import com.github.am4dr.gradle.java_modularize.testing.target.StandaloneJars;
 import com.github.am4dr.gradle.java_modularize.util.GradleBuildSupport;
 import org.gradle.testkit.runner.BuildResult;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
+import java.nio.file.Path;
 
 class JlinkTaskTest {
 
@@ -20,12 +22,18 @@ class JlinkTaskTest {
 
     @BeforeEach
     void setupBuildDir() throws IOException {
-        build = new GradleBuildSupport(this.getClass(), false);
+        build = new GradleBuildSupport(this.getClass(), true);
+        build.createFile(Path.of("settings.gradle"));
         build.append(
                 "plugins {",
                 "   id '" + GradleJavaModularizePlugin.PLUGIN_ID + "'",
                 "}"
         );
+    }
+
+    @AfterEach
+    void afterEach() throws IOException {
+        build.clean();
     }
 
     @Test

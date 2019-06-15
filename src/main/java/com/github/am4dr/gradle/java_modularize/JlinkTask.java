@@ -23,20 +23,18 @@ public class JlinkTask extends DefaultTask {
 
     public final Provider<Directory> DEFAULT_OUTPUT_PARENT_DIRECTORY = getProject().getLayout().getBuildDirectory().dir("jlink");
     private final ObjectFactory objects = getProject().getObjects();
-    private final ListProperty<String> args = objects.listProperty(String.class);
-    private final ListProperty<String> options = objects.listProperty(String.class);
+    private final ListProperty<String> args = objects.listProperty(String.class).empty();
+    private final ListProperty<String> options = objects.listProperty(String.class).empty();
     private final ConfigurableFileCollection modulePaths = getProject().files();
-    private final ListProperty<String> modules = objects.listProperty(String.class);
+    private final ListProperty<String> modules = objects.listProperty(String.class).empty();
     private final Property<String> launchScriptName = objects.property(String.class);
     private final Property<String> launcherClass = objects.property(String.class);
-    private final Property<Integer> compress = objects.property(Integer.class);
+    private final Property<Integer> compress = objects.property(Integer.class).convention(0);
     private final Property<String> outputDirName = objects.property(String.class);
     private final DirectoryProperty outputParentDir = newOutputDirectory();
     private final Property<Boolean> useDefaultModules = objects.property(Boolean.class);
 
     public JlinkTask() {
-        args.set(List.of());
-        options.set(List.of());
         outputParentDir.set(DEFAULT_OUTPUT_PARENT_DIRECTORY);
         outputDirName.set(launchScriptName);
         compress.set(0);
@@ -54,16 +52,21 @@ public class JlinkTask extends DefaultTask {
         if (compress.get() != 0) {
             options.add(String.format("--compress=%d", compress.get()));
         }
+        final List<String> jlinkArgs;
         if (args.get().isEmpty()) {
-            args.set(Tooling.createArgs(modulePaths, modules.get(), launchScriptName.get(), launcherClass.get(), tempDir, options.get()));
+            jlinkArgs = Tooling.createArgs(modulePaths, modules.get(), launchScriptName.get(), launcherClass.get(), tempDir, options.get());
+            args.addAll(jlinkArgs);
         }
-        final ToolProviderSupport.Result result = Tooling.jlink(args.get());
+        else {
+            jlinkArgs = args.get();
+        }
+        final ToolProviderSupport.Result result = Tooling.jlink(jlinkArgs);
         if (result.exitCode != 0) {
             throw new TaskExecutionException(this, new IllegalStateException("exit code is not 0: " + result.out + "\n\n" + result.err));
         }
 //        getProject().sync(sync -> sync.from(tempDir).into(getOutputDir()));
         Files.move(tempDir.toPath(), getOutputDir().get().getAsFile().toPath(), StandardCopyOption.REPLACE_EXISTING);
-    }
+   }
 
     @Input
     public ListProperty<String> getArgs() {
